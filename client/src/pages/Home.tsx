@@ -1,6 +1,8 @@
-// Home page — hero, trust strip, featured grid, why-buy, reviews, FAQ preview.
+// Home page — structured like a classic DTC storefront:
+//   hero banner → category roundels → new arrivals → best sellers →
+//   trust strip → why-buy → reviews → FAQ → closing CTA.
 // The whole page is DB-driven: brand copy comes from store settings and the
-// product grid / testimonials come from the API.
+// product rows / testimonials come from the API.
 import { useMemo } from "react";
 import {
   ArrowRight,
@@ -12,6 +14,11 @@ import {
   RotateCcw,
   Star,
   Plus,
+  Dog,
+  Cat,
+  UtensilsCrossed,
+  Scissors,
+  Plane,
 } from "lucide-react";
 import { trpc } from "@/_core/trpc";
 import { useSeo } from "@/lib/petparcel";
@@ -47,9 +54,20 @@ const FAQ_PREVIEW = [
   },
 ];
 
+// Category → icon + accent, so the roundels read as a real category rail.
+const CATEGORY_ICONS: Record<string, typeof Dog> = {
+  Dogs: Dog,
+  Cats: Cat,
+  Feeding: UtensilsCrossed,
+  Grooming: Scissors,
+  "Travel & Outdoors": Plane,
+};
+
 export default function Home() {
   const s = useSite();
-  const { data: featured, isLoading } = trpc.catalog.featured.useQuery({ limit: 8 });
+  const { data: featured, isLoading: loadingFeatured } = trpc.catalog.featured.useQuery({ limit: 8 });
+  const { data: newest, isLoading: loadingNewest } = trpc.catalog.list.useQuery({ sort: "newest" });
+  const { data: categories } = trpc.catalog.categories.useQuery(undefined, { staleTime: 60_000 });
   const { data: reviews } = trpc.reviews.store.useQuery({ limit: 6 });
 
   useSeo(
@@ -84,12 +102,14 @@ export default function Home() {
     ),
   );
 
-  const products = (featured ?? []) as StoreProduct[];
+  const bestSellers = (featured ?? []) as StoreProduct[];
+  const newArrivals = ((newest ?? []) as StoreProduct[]).slice(0, 8);
+  const cats = categories ?? [];
   const freeShip = (s.free_shipping_threshold_cents / 100).toFixed(0);
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      {/* ── Hero banner ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-secondary/50">
         <div className="container-page grid items-center gap-10 py-12 lg:grid-cols-2 lg:py-20">
           <div>
@@ -140,13 +160,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Trust strip ──────────────────────────────────────────────────── */}
-      <Section className="!py-10">
-        <TrustStrip items={TRUST_BADGES} />
+      {/* ── Category roundels ───────────────────────────────────────────────── */}
+      {cats.length > 0 && (
+        <Section className="!py-10">
+          <SectionHeading
+            align="center"
+            eyebrow="Shop by category"
+            title="Find exactly what your pet needs"
+          />
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
+            {cats.map((c) => {
+              const Icon = CATEGORY_ICONS[c] ?? Dog;
+              return (
+                <a
+                  key={c}
+                  href={`/shop?category=${encodeURIComponent(c)}`}
+                  className="group flex w-24 flex-col items-center gap-3 text-center sm:w-28"
+                >
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-primary ring-1 ring-inset ring-primary/10 transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-24 sm:w-24">
+                    <Icon className="h-8 w-8 sm:h-9 sm:w-9" />
+                  </span>
+                  <span className="text-sm font-bold leading-tight group-hover:text-primary">{c}</span>
+                </a>
+              );
+            })}
+          </div>
+        </Section>
+      )}
+
+      {/* ── New arrivals ────────────────────────────────────────────────────── */}
+      <Section muted>
+        <SectionHeading
+          eyebrow="Just landed"
+          title="New arrivals"
+          subtitle="The latest additions to the PetParcel shelf — trialled on real pets before they went live."
+          action={
+            <CtaLink to="/shop?sort=newest" variant="outline" size="sm">
+              See what's new <ArrowRight className="h-4 w-4" />
+            </CtaLink>
+          }
+        />
+        {loadingNewest ? <ProductGridSkeleton count={4} /> : <ProductGrid products={newArrivals} />}
       </Section>
 
-      {/* ── Featured products ────────────────────────────────────────────── */}
-      <Section muted>
+      {/* ── Best sellers ────────────────────────────────────────────────────── */}
+      <Section>
         <SectionHeading
           eyebrow="Best sellers"
           title="Loved by dogs, cats and their humans"
@@ -157,10 +215,15 @@ export default function Home() {
             </CtaLink>
           }
         />
-        {isLoading ? <ProductGridSkeleton count={8} /> : <ProductGrid products={products} />}
+        {loadingFeatured ? <ProductGridSkeleton count={8} /> : <ProductGrid products={bestSellers} />}
       </Section>
 
-      {/* ── Why buy from us ──────────────────────────────────────────────── */}
+      {/* ── Trust strip ─────────────────────────────────────────────────────── */}
+      <Section muted className="!py-10">
+        <TrustStrip items={TRUST_BADGES} />
+      </Section>
+
+      {/* ── Why buy from us ─────────────────────────────────────────────────── */}
       <Section>
         <SectionHeading
           align="center"
@@ -212,7 +275,7 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ── Reviews / social proof ───────────────────────────────────────── */}
+      {/* ── Reviews / social proof ──────────────────────────────────────────── */}
       {(reviews ?? []).length > 0 && (
         <Section muted>
           <SectionHeading
@@ -242,7 +305,7 @@ export default function Home() {
         </Section>
       )}
 
-      {/* ── FAQ preview ──────────────────────────────────────────────────── */}
+      {/* ── FAQ preview ─────────────────────────────────────────────────────── */}
       <Section>
         <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr]">
           <div>
@@ -269,7 +332,7 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ── Closing CTA ──────────────────────────────────────────────────── */}
+      {/* ── Closing CTA ─────────────────────────────────────────────────────── */}
       <Section muted>
         <div className="card-soft overflow-hidden">
           <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[1.3fr_1fr]">

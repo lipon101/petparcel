@@ -201,7 +201,7 @@ export const US_STATES = [
 export const CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "Other"] as const;
 
 /** Category nav order; unknown categories fall to the end alphabetically. */
-export const CATEGORY_ORDER = ["Dogs", "Cats", "Small Pets", "Grooming"];
+export const CATEGORY_ORDER = ["Dogs", "Cats", "Feeding", "Grooming", "Travel & Outdoors"];
 
 export function sortCategories(list: string[]): string[] {
   return [...list].sort((a, b) => {

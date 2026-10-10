@@ -169,6 +169,18 @@ const settingsRouter = router({
   providers: publicProcedure.query(() => listProviders()),
 });
 
+// ── newsletter ───────────────────────────────────────────────────────────────
+const newsletterRouter = router({
+  subscribe: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email("Enter a valid email address"),
+        source: z.string().max(40).optional(),
+      }),
+    )
+    .mutation(({ input }) => q.subscribeNewsletter(input.email, input.source ?? "footer")),
+});
+
 // ── checkout ─────────────────────────────────────────────────────────────────
 const checkoutRouter = router({
   /** Place an order. Guests and logged-in customers both use this. Prices are
@@ -531,6 +543,9 @@ const adminRouter = router({
     .input(z.object({ id: z.string().min(1) }))
     .mutation(({ input }) => q.deleteReview(input.id)),
 
+  // newsletter
+  newsletter: adminProcedure.query(() => q.listNewsletterSubscribers()),
+
   // settings
   settings: adminProcedure.query(() => getSettings()),
   updateSettings: adminProcedure
@@ -562,6 +577,7 @@ export const appRouter = router({
   catalog: catalogRouter,
   reviews: reviewsRouter,
   settings: settingsRouter,
+  newsletter: newsletterRouter,
   checkout: checkoutRouter,
   orders: ordersRouter,
   account: accountRouter,

@@ -28,8 +28,8 @@ switching provider is a config change plus credentials.
 
 | Provider | BD merchant? | Physical goods? | US cards? | Typical cost | Verdict |
 |---|---|---|---|---|---|
-| **2Checkout (Verifone)** | ✅ Yes | ✅ Yes | ✅ Visa/MC/Amex | ~3.5% + $0.35 per txn, no monthly fee on standard plans | **Recommended primary** |
-| **SSLCommerz** | ✅ Yes (local entity) | ✅ Yes | ✅ international cards in USD | ~2.5–3.5% | **Recommended fallback / local** |
+| **2Checkout (Verifone)** | ✅ Yes | ✅ Yes | ✅ Visa/MC/Amex | ~3.5% + $0.35 per txn, no monthly fee on standard plans | **The single supported gateway** |
+| **SSLCommerz** | ✅ Yes (local entity) | ✅ Yes | ✅ international cards in USD | ~2.5–3.5% | Not integrated — 2Checkout is the only gateway |
 | **Paddle** | ⚠️ | ❌ Digital/SaaS only | ✅ | 5% + $0.50 | ❌ Physical goods prohibited |
 | **Lemon Squeezy** | ⚠️ | ❌ Digital only | ✅ | 5% + $0.50 | ❌ Physical goods prohibited |
 | **Gumroad** | ⚠️ | ⚠️ Limited physical support | ✅ | ~10% | ❌ Poor fit for a real storefront |
@@ -50,18 +50,19 @@ switching provider is a config change plus credentials.
 
 ## 3. Recommendation
 
-**Primary: 2Checkout (Verifone)** — supports Bangladesh-based merchants, explicitly permits
-physical goods, accepts US Visa/Mastercard/Amex, requires no monthly fee on standard plans,
-and gives you a hosted checkout you simply redirect to. That matches exactly what this app
-implements.
-
-**Fallback / local: SSLCommerz** — a Bangladeshi gateway that settles internationally and
-handles local payment methods too. Useful if 2Checkout's underwriting declines your
-application, or if you later want to sell domestically.
+**2Checkout (Verifone) is the single supported card gateway.** It supports
+Bangladesh-based merchants, explicitly permits physical goods, accepts US
+Visa/Mastercard/Amex, requires no monthly fee on standard plans, and gives you a hosted
+checkout you simply redirect to. That matches exactly what this app implements — the
+payment abstraction ships with `2checkout` and `manual` only.
 
 **Meanwhile: `manual` mode** — the store ships with this active. Orders are recorded as
 *unpaid* and you invoice by bank transfer. Nothing blocks you from launching and taking
-orders before a gateway is approved.
+orders before the 2Checkout account is approved.
+
+**The owner's remaining steps are exactly two:** (1) apply for a 2Checkout (Verifone)
+merchant account, then (2) paste the keys into the Vercel environment variables. No code
+change is needed.
 
 ---
 
@@ -87,30 +88,14 @@ orders before a gateway is approved.
 
 ---
 
-## 5. Setup — SSLCommerz
-
-1. Open an **SSLCommerz** merchant account (requires a Bangladeshi business entity and bank).
-2. From the merchant panel, copy the **Store ID** and **Store Password** (sandbox credentials
-   are available immediately for testing).
-3. Set:
-   ```
-   SSLCOMMERZ_STORE_ID=your_store_id
-   SSLCOMMERZ_STORE_PASSWORD=your_store_password
-   SSLCOMMERZ_MODE=sandbox       # switch to "live" for production
-   ```
-4. In admin → **Settings → Payments**, set `payment_provider` to `sslcommerz`.
-5. Run a sandbox transaction and confirm the order marks paid.
-
----
-
-## 6. How the integration is built
+## 5. How the integration is built
 
 `server/services/payments.ts` exposes one small interface. Adding a provider means
 implementing it and registering it — no changes to checkout, orders or the admin panel.
 
 ```ts
 interface PaymentProvider {
-  id: string;                     // "2checkout" | "sslcommerz" | "manual"
+  id: string;                     // "2checkout" | "manual"
   label: string;
   isConfigured(): boolean;        // are the env credentials present?
   start(input): Promise<{ redirectUrl: string; instructions?: string }>;
@@ -132,9 +117,9 @@ later add one, keep `verifyPayment` as the authority — never trust a redirect 
 
 ---
 
-## 7. Practical tips
+## 6. Practical tips
 
-- **Test mode first.** Both gateways have sandbox credentials; use them before going live.
+- **Test mode first.** 2Checkout has test credentials; use them before going live.
 - **Watch FX and settlement.** You will be paid in USD and settle to a BDT account — compare
   both the processing fee and the FX spread, not just the headline percentage.
 - **Keep a manual path.** If a payment fails or a card is declined, `manual` mode means you

@@ -18,10 +18,13 @@ async function main() {
   const client = new pg.Client({ connectionString });
   await client.connect();
   try {
-    // `public` is the only schema this template uses.
+    // `public` holds the app tables; `drizzle` holds drizzle-kit's own
+    // migration journal. BOTH must go, or a re-migrate sees the journal and
+    // skips every migration as "already applied" while the tables are gone.
     await client.query("drop schema if exists public cascade");
+    await client.query("drop schema if exists drizzle cascade");
     await client.query("create schema public");
-    console.log("Dev database reset: schema public dropped and recreated.");
+    console.log("Dev database reset: schemas public + drizzle dropped and recreated.");
   } finally {
     await client.end();
   }

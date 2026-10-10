@@ -17,7 +17,7 @@ built from scratch for the **US market** — React + tRPC + Postgres. No Shopify
 | API | tRPC (type-safe end-to-end) on a Hono server |
 | Database | PostgreSQL via Drizzle ORM (migrations committed) |
 | Auth | Email + password, session cookie (bcrypt hashes) |
-| Payments | Pluggable provider abstraction — 2Checkout (Verifone), SSLCommerz, or manual/offline |
+| Payments | Pluggable provider abstraction — 2Checkout (Verifone) or manual/offline |
 | Hosting | Vercel (static client + serverless API) or any Node host |
 
 ---
@@ -75,8 +75,6 @@ pnpm dev                      # client on :3000, API on :3001
 | `TWOCHECKOUT_SELLER_ID` | For 2Checkout | Your Verifone seller ID |
 | `TWOCHECKOUT_SECRET_KEY` | For 2Checkout | From your 2Checkout account |
 | `TWOCHECKOUT_MODE` | – | `test` (default) or `live` |
-| `SSLCOMMERZ_STORE_ID` / `SSLCOMMERZ_STORE_PASSWORD` | For SSLCommerz | From your SSLCommerz merchant panel |
-| `SSLCOMMERZ_MODE` | – | `sandbox` (default) or `live` |
 
 Payment keys are **secrets** — they live in environment variables only, never in the
 database and never in the admin UI. The admin Settings page only selects which provider
@@ -143,13 +141,19 @@ You need a hosted Postgres database (Vercel's own Postgres, **Neon** or **Supaba
 
 ## 5. Payments
 
-Card acceptance is **pluggable** behind `server/services/payments.ts`. Three providers ship:
+Card acceptance is **pluggable** behind `server/services/payments.ts`. Two providers ship:
 
 - **`manual`** (default) — the order is recorded as *unpaid* and you settle by invoice.
   This lets the store run end-to-end before any gateway credentials exist.
-- **`2checkout`** (Verifone) — hosted checkout redirect; recommended for a
-  Bangladesh-based merchant selling physical goods to US cardholders.
-- **`sslcommerz`** — hosted checkout; strong local/regional option.
+- **`2checkout`** (Verifone) — hosted checkout redirect; the single supported card
+  gateway, recommended for a Bangladesh-based merchant selling physical goods to US
+  cardholders.
+
+**2Checkout is the only card gateway.** The owner's remaining steps are exactly two:
+apply for a 2Checkout (Verifone) merchant account, then paste `TWOCHECKOUT_SELLER_ID`
+and `TWOCHECKOUT_SECRET_KEY` into the Vercel environment variables and set
+`payment_provider` to `2checkout` in admin → Settings → Payments. Until then the store
+runs in `manual` mode and takes orders end-to-end.
 
 How confirmation works: after the buyer returns from the hosted page, the server **pulls**
 the order status from the provider's API (`verifyPayment`) and marks the order paid. This
@@ -180,7 +184,7 @@ app/
 │   ├── seed.ts                 # demo data seeder
 │   ├── store-settings.ts       # typed settings loader
 │   └── services/payments.ts    # pluggable payment providers
-├── drizzle/schema.ts           # 11 tables + migrations
+├── drizzle/schema.ts           # 12 tables + migrations
 ├── scripts/                    # seed, sitemap, admin:create, reset-db
 └── vercel.json
 ```

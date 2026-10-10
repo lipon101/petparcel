@@ -12,8 +12,7 @@
 //                 funds land. This is the DEFAULT so a fresh clone is usable.
 //   2checkout   — Verifone / 2Checkout hosted checkout. Supports Bangladesh
 //                 merchants selling physical goods and accepts US Visa/MC/Amex.
-//   sslcommerz  — SSLCommerz (Bangladesh, PSO-licensed). Accepts international
-//                 cards in USD; the strongest local fallback.
+//                 This is the ONLY card gateway PetParcel supports.
 //
 // Keys come from the app owner's environment (Settings → Environment variables),
 // never from code. See PAYMENTS.md for the full comparison and setup steps.
@@ -23,7 +22,7 @@ import { env } from "../_core/env";
 import { outboundFetch } from "../_core/fetch";
 import { orders } from "../../drizzle/schema";
 
-export type ProviderId = "manual" | "2checkout" | "sslcommerz";
+export type ProviderId = "manual" | "2checkout";
 
 export interface PaymentStartInput {
   orderNumber: string;
@@ -114,65 +113,9 @@ const twoCheckoutProvider: PaymentProvider = {
   },
 };
 
-/** SSLCommerz hosted checkout (Bangladesh). */
-const sslcommerzProvider: PaymentProvider = {
-  id: "sslcommerz",
-  label: "Credit or debit card (SSLCommerz)",
-  isConfigured: () => Boolean(process.env.SSLCOMMERZ_STORE_ID && process.env.SSLCOMMERZ_STORE_PASSWORD),
-  describe: () => "You'll be redirected to SSLCommerz's secure page. International cards in USD are supported.",
-  async start(input) {
-    const storeId = env.config("SSLCOMMERZ_STORE_ID");
-    const storePassword = env.secret("SSLCOMMERZ_STORE_PASSWORD");
-    const sandbox = env.config("SSLCOMMERZ_MODE", "live") === "sandbox";
-    const base = sandbox
-      ? "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
-      : "https://securepay.sslcommerz.com/gwprocess/v4/api.php";
-
-    const body = new URLSearchParams({
-      store_id: storeId,
-      store_passwd: storePassword,
-      total_amount: centsToMajor(input.totalCents),
-      currency: input.currency,
-      tran_id: input.orderNumber,
-      success_url: input.returnUrl,
-      fail_url: input.returnUrl,
-      cancel_url: input.returnUrl,
-      ipn_url: input.ipnUrl,
-      cus_name: input.customerName,
-      cus_email: input.email,
-      cus_add1: "N/A",
-      cus_city: "N/A",
-      cus_country: "United States",
-      cus_phone: "N/A",
-      shipping_method: "YES",
-      product_name: `PetParcel order ${input.orderNumber}`,
-      product_category: "Pet supplies",
-      product_profile: "physical-goods",
-    });
-
-    const res = await outboundFetch(base, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-      timeoutMs: 15_000,
-    });
-    if (!res.ok) throw new Error(`SSLCommerz session failed (${res.status})`);
-    const json = (await res.json()) as { status?: string; GatewayPageURL?: string; failedreason?: string };
-    if (json.status !== "SUCCESS" || !json.GatewayPageURL) {
-      throw new Error(json.failedreason || "SSLCommerz did not return a payment page");
-    }
-    return {
-      redirectUrl: json.GatewayPageURL,
-      providerRef: input.orderNumber,
-      instructions: "Complete your card payment on SSLCommerz's secure page.",
-    };
-  },
-};
-
 const REGISTRY: Record<ProviderId, PaymentProvider> = {
   manual: manualProvider,
   "2checkout": twoCheckoutProvider,
-  sslcommerz: sslcommerzProvider,
 };
 
 export const PROVIDER_IDS = Object.keys(REGISTRY) as ProviderId[];
@@ -204,8 +147,7 @@ export type WebhookOutcome = { handled: boolean; orderNumber?: string; paid?: bo
  *
  * Signature verification is provider-specific and intentionally explicit here:
  *  - 2Checkout: verifies the MD5 hash built from the secret word + order data.
- *  - SSLCommerz: validates the IPN payload against the validator endpoint.
- * Both are stubbed to a "verify when the secret is present" posture so a store
+ * It is stubbed to a "verify when the secret is present" posture so a store
  * with no keys (manual mode) never blocks, and a store with keys never accepts
  * an unsigned notification.
  */
@@ -257,21 +199,6 @@ export async function handleWebhook(
  * Returns true when the gateway reports the order as paid.
  */
 export async function verifyPayment(providerId: string, orderNumber: string): Promise<boolean> {
-  if (providerId === "sslcommerz") {
-    const storeId = env.config("SSLCOMMERZ_STORE_ID");
-    const storePassword = env.secret("SSLCOMMERZ_STORE_PASSWORD");
-    const sandbox = env.config("SSLCOMMERZ_MODE", "live") === "sandbox";
-    const base = sandbox
-      ? "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
-      : "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php";
-    const url = `${base}?val_id=${encodeURIComponent(orderNumber)}&store_id=${encodeURIComponent(storeId)}&store_passwd=${encodeURIComponent(storePassword)}&format=json`;
-    const res = await outboundFetch(url, { timeoutMs: 15_000 });
-    if (!res.ok) return false;
-    const json = (await res.json()) as { status?: string };
-    const status = String(json.status ?? "").toUpperCase();
-    return status === "VALID" || status === "VALIDATED";
-  }
-
   if (providerId === "2checkout") {
     const sellerId = env.config("TWOCHECKOUT_SELLER_ID");
     const secretKey = env.secret("TWOCHECKOUT_SECRET_KEY");
@@ -294,11 +221,6 @@ export async function verifyPayment(providerId: string, orderNumber: string): Pr
 
 /** Provider-specific "did this notification mean paid?". */
 function isPaidNotification(providerId: string, payload: Record<string, unknown>): boolean {
-  if (providerId === "sslcommerz") {
-    const status = String(payload.status ?? "").toUpperCase();
-    // SSLCommerz sends VALID / VALIDATED on success.
-    return status === "VALID" || status === "VALIDATED";
-  }
   if (providerId === "2checkout") {
     const status = String(payload.invoice_status ?? payload.payment_status ?? "").toLowerCase();
     // 2Checkout IPN uses invoice_status "approved" / payment_status "paid".

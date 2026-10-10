@@ -223,6 +223,19 @@ export const storeSettings = pgTable("store_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Newsletter signups from the storefront footer. Store-owned: public write,
+ *  admin read. `email` is unique so a repeat signup is a no-op, not a dupe. */
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    source: text("source").notNull().default("footer"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("newsletter_created_idx").on(t.createdAt)],
+);
+
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -230,3 +243,4 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type OrderEvent = typeof orderEvents.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Address = typeof addresses.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

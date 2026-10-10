@@ -21,6 +21,7 @@ import type { BatchItem } from "drizzle-orm/batch";
 import { atomic, db, isUniqueViolation } from "./_core/db";
 import {
   addresses,
+  newsletterSubscribers,
   orderEvents,
   orderItems,
   orders,
@@ -992,4 +993,31 @@ export async function listSeoProducts() {
     .from(products)
     .where(eq(products.active, true))
     .orderBy(asc(products.sortOrder), asc(products.name));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Newsletter
+// ─────────────────────────────────────────────────────────────────────────────
+/** Subscribe an email. Idempotent: a repeat signup returns the existing row
+ *  rather than erroring, so the storefront can always show a success state. */
+export async function subscribeNewsletter(email: string, source = "footer") {
+  const normalized = email.trim().toLowerCase();
+  const [existing] = await db
+    .select()
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  if (existing) return { subscriber: existing, alreadySubscribed: true };
+  const [row] = await db
+    .insert(newsletterSubscribers)
+    .values({ email: normalized, source })
+    .returning();
+  return { subscriber: row, alreadySubscribed: false };
+}
+
+export async function listNewsletterSubscribers() {
+  return db
+    .select()
+    .from(newsletterSubscribers)
+    .orderBy(desc(newsletterSubscribers.createdAt));
 }
