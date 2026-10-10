@@ -1,17 +1,30 @@
+// Sign in. Uses the platform auth primitive via useAuth; redirects to the
+// account dashboard (or back to where the shopper came from) once signed in.
 import { useState, type FormEvent } from "react";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useSearch } from "wouter";
+import { Lock, Mail } from "lucide-react";
 import { useAuth } from "@/_core/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSeo } from "@/lib/petparcel";
+import { Section } from "@/components/site/Bits";
+
+const field =
+  "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function Login() {
   const { login, user } = useAuth();
+  const search = useSearch();
+  const next = new URLSearchParams(search).get("next") ?? "/account";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useSeo({
+    title: "Sign In",
+    description: "Sign in to your PetParcel account to see your orders, tracking and saved addresses.",
+    path: "/login",
+    noindex: true,
+  });
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,50 +33,92 @@ export default function Login() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "We couldn't sign you in. Check your details.");
     } finally {
       setBusy(false);
     }
   }
 
-  // Declarative, not `navigate()` straight after the await. The auth query's
-  // cache update and this component's re-render are not the same tick, so an
-  // imperative jump reaches the guarded route while `user` is still null, and
-  // <Protected> bounces it right back here — the user has signed up or logged
-  // in successfully and is looking at a login form. Rendering a Redirect once
-  // `user` actually exists waits for the state to arrive.
-  if (user) return <Redirect to="/dashboard" />;
+  // Declarative redirect: the auth cache update and this render are not the same
+  // tick, so an imperative navigate would hit the guard while user is still null.
+  if (user) return <Redirect to={next} />;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Log in to your account.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <Section className="!pt-12">
+      <div className="mx-auto max-w-md">
+        <div className="card-soft p-8">
+          <h1 className="text-2xl font-extrabold">Welcome back</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Sign in to track orders and check out faster.
+          </p>
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-semibold" htmlFor="login-email">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 mt-[3px] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  id="login-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`${field} pl-9`}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+
+            <div>
+              <label className="block text-sm font-semibold" htmlFor="login-password">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 mt-[3px] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  id="login-password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${field} pl-9`}
+                />
+              </div>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Logging in…" : "Log in"}
-            </Button>
+
+            {error && (
+              <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            >
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            No account?{" "}
-            <Link to="/signup" className="underline">
-              Sign up
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            New to PetParcel?{" "}
+            <Link to="/register" className="font-semibold text-primary hover:underline">
+              Create an account
             </Link>
           </p>
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          You can also check out as a guest — no account needed.{" "}
+          <Link to="/track" className="font-semibold text-primary hover:underline">
+            Track an order instead
+          </Link>
+        </p>
+      </div>
+    </Section>
   );
 }

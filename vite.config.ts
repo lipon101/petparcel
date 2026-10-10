@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
@@ -77,5 +77,15 @@ export default defineConfig({
     // Client build lands in dist/public; the prod server serves it statically.
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+  },
+  // The routers import _core/db (for isUniqueViolation), which binds the env at
+  // import time — so the test runner needs well-formed values even though every
+  // data call is mocked. The platform injects the real ones at runtime.
+  test: {
+    setupFiles: [path.resolve(import.meta.dirname, "vitest.setup.ts")],
+    env: {
+      DATABASE_URL: process.env.DATABASE_URL ?? "postgres://user:pass@localhost:5432/petparcel_test",
+      JWT_SECRET: process.env.JWT_SECRET ?? "test-jwt-secret-not-for-production",
+    },
   },
 });

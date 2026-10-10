@@ -2,48 +2,58 @@
 @import "tw-animate-css";
 
 /* Tailwind v4 is CSS-first: no tailwind.config / postcss / autoprefixer.
-   Dark mode is class-based (add `dark` on <html>/<body>); shadcn/ui token set. */
+   Dark mode is class-based (add `dark` on <html>/<body>); shadcn/ui token set.
+
+   PetParcel palette — warm, trustworthy DTC pet brand:
+     primary  warm teal  (#0f766e family)  — actions, links, brand
+     accent   coral      (#f97066 family)  — highlights, sale, CTAs that pop
+     surface  cream      (#fbfaf7 family)  — page background, never pure white
+   The stock slate theme is deliberately replaced in BOTH light and dark blocks. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.5rem;
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 84% 4.9%);
+  --radius: 1rem;
+  --background: hsl(40 33% 98%);
+  --foreground: hsl(200 28% 12%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222.2 84% 4.9%);
-  --primary: hsl(222.2 47.4% 11.2%);
-  --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
-  --accent: hsl(210 40% 96.1%);
-  --accent-foreground: hsl(222.2 47.4% 11.2%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(200 28% 12%);
+  --primary: hsl(174 62% 26%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(174 28% 94%);
+  --secondary-foreground: hsl(174 62% 20%);
+  --muted: hsl(40 22% 95%);
+  --muted-foreground: hsl(200 12% 42%);
+  --accent: hsl(12 88% 62%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 72% 51%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(180 12% 88%);
+  --input: hsl(180 12% 86%);
+  --ring: hsl(174 62% 32%);
+  --success: hsl(158 64% 32%);
+  --warning: hsl(38 92% 45%);
 }
 
 .dark {
-  --background: hsl(222.2 84% 4.9%);
-  --foreground: hsl(210 40% 98%);
-  --card: hsl(222.2 84% 4.9%);
-  --card-foreground: hsl(210 40% 98%);
-  --primary: hsl(210 40% 98%);
-  --primary-foreground: hsl(222.2 47.4% 11.2%);
-  --secondary: hsl(217.2 32.6% 17.5%);
-  --secondary-foreground: hsl(210 40% 98%);
-  --muted: hsl(217.2 32.6% 17.5%);
-  --muted-foreground: hsl(215 20.2% 65.1%);
-  --accent: hsl(217.2 32.6% 17.5%);
-  --accent-foreground: hsl(210 40% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(217.2 32.6% 17.5%);
-  --input: hsl(217.2 32.6% 17.5%);
-  --ring: hsl(212.7 26.8% 83.9%);
+  --background: hsl(200 32% 8%);
+  --foreground: hsl(40 30% 96%);
+  --card: hsl(200 28% 12%);
+  --card-foreground: hsl(40 30% 96%);
+  --primary: hsl(172 55% 45%);
+  --primary-foreground: hsl(200 40% 8%);
+  --secondary: hsl(200 24% 18%);
+  --secondary-foreground: hsl(40 30% 96%);
+  --muted: hsl(200 22% 17%);
+  --muted-foreground: hsl(200 14% 68%);
+  --accent: hsl(12 82% 62%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 62% 45%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(200 20% 22%);
+  --input: hsl(200 20% 24%);
+  --ring: hsl(172 55% 45%);
+  --success: hsl(158 55% 45%);
+  --warning: hsl(38 85% 55%);
 }
 
 /* Map design tokens to Tailwind's theme so utilities (bg-primary, border-border,
@@ -63,20 +73,57 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --font-display: "Nunito", ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    /* Anchor jumps from the footer/policy pages shouldn't hide under the header. */
+    scroll-padding-top: 6rem;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+  }
+  /* A visible focus ring everywhere, not just on inputs. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Consistent page gutter + max width for every section. */
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  /* The card treatment used across the storefront: generous radius, soft shadow. */
+  .card-soft {
+    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)];
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  /* Section rhythm — one vertical rhythm for the whole site. */
+  .section {
+    @apply py-14 sm:py-20;
   }
 }

@@ -18,6 +18,7 @@ export default defineConfig({
   test: {
     root: import.meta.dirname,
     environment: "node",
+    setupFiles: [path.resolve(import.meta.dirname, "vitest.setup.ts")],
     include: [
       "client/src/**/*.test.{ts,tsx}",
       "server/**/*.test.ts",

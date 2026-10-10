@@ -1,9 +1,104 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>App</title>
+    <meta name="theme-color" content="#0f766e" />
+
+    <!-- Primary US-market SEO. Per-route tags (title, description, canonical,
+         Open Graph, Twitter cards, JSON-LD) are set at runtime by useSeo(). -->
+    <title>PetParcel — Pet Supplies for Dogs &amp; Cats | Free US Shipping Over $49</title>
+    <meta
+      name="description"
+      content="Shop vet-approved dog beds, cat trees, harnesses, toys and grooming gear at PetParcel. Free US shipping over $49, 30-day returns, and US-based support."
+    />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="author" content="PetParcel LLC" />
+    <meta name="geo.region" content="US" />
+    <link rel="canonical" href="https://www.petparcel.store/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PetParcel" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="PetParcel — Pet Supplies for Dogs &amp; Cats" />
+    <meta
+      property="og:description"
+      content="Vet-approved pet gear shipped free across the USA. Beds, harnesses, toys and grooming — 30-day happy-pet returns."
+    />
+    <meta property="og:url" content="https://www.petparcel.store/" />
+    <meta property="og:image" content="https://www.petparcel.store/hero.png" />
+    <meta property="og:image:alt" content="A happy golden retriever and cat with PetParcel products" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PetParcel — Pet Supplies for Dogs &amp; Cats" />
+    <meta
+      name="twitter:description"
+      content="Vet-approved pet gear shipped free across the USA. 30-day happy-pet returns."
+    />
+    <meta name="twitter:image" content="https://www.petparcel.store/hero.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/hero.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Organization + WebSite structured data. Product/Breadcrumb/FAQ schema is
+         injected per page by useSeo({ jsonLd }). -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.petparcel.store/#organization",
+            "name": "PetParcel",
+            "url": "https://www.petparcel.store",
+            "logo": "https://www.petparcel.store/hero.png",
+            "email": "support@petparcel.store",
+            "telephone": "+1-800-555-0142",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1200 Market St",
+              "addressLocality": "Wilmington",
+              "addressRegion": "DE",
+              "postalCode": "19801",
+              "addressCountry": "US"
+            },
+            "areaServed": { "@type": "Country", "name": "United States" }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.petparcel.store/#website",
+            "url": "https://www.petparcel.store",
+            "name": "PetParcel",
+            "inLanguage": "en-US",
+            "publisher": { "@id": "https://www.petparcel.store/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.petparcel.store/shop?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "OnlineStore",
+            "@id": "https://www.petparcel.store/#store",
+            "name": "PetParcel",
+            "url": "https://www.petparcel.store",
+            "image": "https://www.petparcel.store/hero.png",
+            "priceRange": "$9–$129",
+            "currenciesAccepted": "USD",
+            "paymentAccepted": "Credit Card, Debit Card",
+            "parentOrganization": { "@id": "https://www.petparcel.store/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

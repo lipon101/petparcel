@@ -1,0 +1,26 @@
+# PetParcel — robots.txt
+# US-market storefront. Everything public is crawlable; account, cart, checkout
+# and admin surfaces are excluded because they show per-visitor state.
+
+User-agent: *
+Allow: /
+
+# Per-visitor / transactional surfaces
+Disallow: /account
+Disallow: /account/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /login
+Disallow: /register
+
+# Individual order receipts are private to the buyer
+Disallow: /order/
+
+# Common junk crawlers add no value here
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+Sitemap: https://www.petparcel.store/sitemap.xml
+Host: https://www.petparcel.store

@@ -138,6 +138,29 @@ export function formatMoney(cents: number | null | undefined, currency = "USD"):
   }
 }
 
+/** URL-safe slug from a display name. */
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Parse a dollars string from a form field ("29.99") into integer cents.
+ *  Returns null for blank or unparseable input so callers can branch on it. */
+export function parseDollarsToCents(input: string | number | null | undefined): number | null {
+  if (input === null || input === undefined || input === "") return null;
+  if (typeof input === "number") return Number.isFinite(input) ? Math.round(input * 100) : null;
+  const cleaned = String(input).replace(/[^0-9.]/g, "");
+  // Nothing numeric survived — treat it as "no value" rather than silently $0.
+  if (!/\d/.test(cleaned)) return null;
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n * 100);
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
@@ -156,17 +179,6 @@ export function formatDateTime(value: string | Date | null | undefined): string 
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-export function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
 }
 
 /** Order numbers are short, uppercase and unambiguous (no O/0/I/1). */

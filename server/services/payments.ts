@@ -240,6 +240,58 @@ export async function handleWebhook(
   return { handled: true, orderNumber, paid };
 }
 
+/**
+ * PULL confirmation — the primary path on this platform.
+ *
+ * Receiving a provider's inbound webhook needs a server route, which this
+ * template only exposes for `/trpc`, `/app-storage`, `/api/health` and the
+ * platform's own signed `/api/_jobs/*`. Rather than edit the platform layer,
+ * PetParcel confirms payment by ASKING the gateway (outbound HTTP, which is a
+ * supported capability) when the shopper returns from the hosted checkout.
+ *
+ * This is not a weaker check than a webhook: the answer comes from the
+ * gateway's own API using our secret key, so a customer cannot mark an order
+ * paid by editing a URL. `handleWebhook` above remains available for operators
+ * who deploy behind their own receiver.
+ *
+ * Returns true when the gateway reports the order as paid.
+ */
+export async function verifyPayment(providerId: string, orderNumber: string): Promise<boolean> {
+  if (providerId === "sslcommerz") {
+    const storeId = env.config("SSLCOMMERZ_STORE_ID");
+    const storePassword = env.secret("SSLCOMMERZ_STORE_PASSWORD");
+    const sandbox = env.config("SSLCOMMERZ_MODE", "live") === "sandbox";
+    const base = sandbox
+      ? "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
+      : "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php";
+    const url = `${base}?val_id=${encodeURIComponent(orderNumber)}&store_id=${encodeURIComponent(storeId)}&store_passwd=${encodeURIComponent(storePassword)}&format=json`;
+    const res = await outboundFetch(url, { timeoutMs: 15_000 });
+    if (!res.ok) return false;
+    const json = (await res.json()) as { status?: string };
+    const status = String(json.status ?? "").toUpperCase();
+    return status === "VALID" || status === "VALIDATED";
+  }
+
+  if (providerId === "2checkout") {
+    const sellerId = env.config("TWOCHECKOUT_SELLER_ID");
+    const secretKey = env.secret("TWOCHECKOUT_SECRET_KEY");
+    const res = await outboundFetch(
+      `https://api.2checkout.com/rest/6.0/orders/${encodeURIComponent(orderNumber)}/`,
+      {
+        headers: { "X-Avangate-Authentication": `${sellerId}:${secretKey}` },
+        timeoutMs: 15_000,
+      },
+    );
+    if (!res.ok) return false;
+    const json = (await res.json()) as { Status?: string; PaymentStatus?: string };
+    const status = String(json.Status ?? "").toUpperCase();
+    return status === "COMPLETE" || status === "PAID";
+  }
+
+  // Manual/offline: there is nothing to ask. The admin marks the order paid.
+  return false;
+}
+
 /** Provider-specific "did this notification mean paid?". */
 function isPaidNotification(providerId: string, payload: Record<string, unknown>): boolean {
   if (providerId === "sslcommerz") {
