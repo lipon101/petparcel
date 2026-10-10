@@ -28,6 +28,9 @@ export interface StoreProduct {
   createdAt: Date | string;
   updatedAt: Date | string;
   variants: StoreVariant[];
+  /** Real aggregate from the reviews table — null/0 when a product has none yet. */
+  rating?: number | null;
+  reviewCount?: number;
 }
 
 export interface StoreAddressSnapshot {

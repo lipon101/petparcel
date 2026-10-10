@@ -36,9 +36,9 @@ export function About() {
       <Section muted className="!py-12">
         <div className="grid gap-6 sm:grid-cols-3">
           {[
-            { stat: "40,000+", label: "US pet parents served" },
-            { stat: "4.8 / 5", label: "Average product rating" },
-            { stat: "3–6 days", label: "Typical US delivery" },
+            { stat: "Dogs & cats", label: "Everything we stock is for both" },
+            { stat: "30 days", label: "To change your mind, no restocking fee" },
+            { stat: "1 business day", label: "Typical dispatch from our US warehouse" },
           ].map((item) => (
             <div key={item.label} className="card-soft p-6 text-center">
               <p className="text-3xl font-medium text-primary">{item.stat}</p>

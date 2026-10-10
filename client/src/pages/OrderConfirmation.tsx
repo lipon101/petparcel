@@ -16,7 +16,6 @@ import {
   formatDateTime,
 } from "@shared/store";
 import type { StoreOrderDetail } from "@/lib/types";
-import { useSite } from "@/components/site/Layout";
 import { Breadcrumbs, CtaLink, EmptyState, ErrorState, LoadingState, Section } from "@/components/site/Bits";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +33,6 @@ function readRememberedEmail(): string {
 }
 
 export default function OrderConfirmation() {
-  const s = useSite();
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = (params.orderNumber ?? "").toUpperCase();
   const { user, isLoading: authLoading } = useAuth();

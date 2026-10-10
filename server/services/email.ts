@@ -202,7 +202,7 @@ export interface RenderedEmail {
 export function renderOrderConfirmation(
   d: OrderEmailData,
   brand = "PetParcel",
-  supportEmail = "support@petparcel.store",
+  supportEmail = "hello@petparcel.store",
   businessAddress = "PetParcel LLC",
 ): RenderedEmail {
   const subject = `Order ${d.orderNumber} confirmed — thank you, ${d.customerName.split(" ")[0] || "friend"}!`;
@@ -282,7 +282,7 @@ export function renderOrderConfirmation(
 export function renderShippingNotification(
   d: OrderEmailData,
   brand = "PetParcel",
-  supportEmail = "support@petparcel.store",
+  supportEmail = "hello@petparcel.store",
   businessAddress = "PetParcel LLC",
 ): RenderedEmail {
   const carrier = d.carrier || "the carrier";

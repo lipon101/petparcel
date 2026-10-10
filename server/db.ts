@@ -200,7 +200,12 @@ export async function getDefaultAddress(userId: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Products & variants
 // ─────────────────────────────────────────────────────────────────────────────
-export type ProductWithVariants = Product & { variants: ProductVariant[] };
+export type ProductWithVariants = Product & {
+  variants: ProductVariant[];
+  /** Real aggregate from the reviews table — null when a product has none yet. */
+  rating?: number | null;
+  reviewCount?: number;
+};
 
 export async function listVariantsForProducts(productIds: string[]): Promise<ProductVariant[]> {
   if (productIds.length === 0) return [];
@@ -219,6 +224,37 @@ function attachVariants(list: Product[], variants: ProductVariant[]): ProductWit
     byProduct.set(v.productId, arr);
   }
   return list.map((p) => ({ ...p, variants: byProduct.get(p.id) ?? [] }));
+}
+
+/** Real per-product rating aggregates, so a card never shows an invented count. */
+async function ratingsForProducts(
+  productIds: string[],
+): Promise<Map<string, { avg: number; count: number }>> {
+  const map = new Map<string, { avg: number; count: number }>();
+  if (productIds.length === 0) return map;
+  const rows = await db
+    .select({
+      productId: reviews.productId,
+      avg: sql<number>`avg(${reviews.rating})`,
+      count: count(),
+    })
+    .from(reviews)
+    .where(inArray(reviews.productId, productIds))
+    .groupBy(reviews.productId);
+  for (const r of rows) {
+    if (r.productId) map.set(r.productId, { avg: Number(r.avg), count: Number(r.count) });
+  }
+  return map;
+}
+
+function attachRatings(
+  list: ProductWithVariants[],
+  ratings: Map<string, { avg: number; count: number }>,
+): ProductWithVariants[] {
+  return list.map((p) => {
+    const r = ratings.get(p.id);
+    return { ...p, rating: r ? Math.round(r.avg * 10) / 10 : null, reviewCount: r?.count ?? 0 };
+  });
 }
 
 export type ProductSort = "featured" | "price-asc" | "price-desc" | "newest" | "name";
@@ -261,7 +297,8 @@ export async function listProducts(opts: {
     .orderBy(...orderBy)
     .limit(opts.limit ?? 200);
 
-  return attachVariants(rows, await listVariantsForProducts(rows.map((r) => r.id)));
+  const withVariants = attachVariants(rows, await listVariantsForProducts(rows.map((r) => r.id)));
+  return attachRatings(withVariants, await ratingsForProducts(rows.map((r) => r.id)));
 }
 
 export async function listFeaturedProducts(limit = 8): Promise<ProductWithVariants[]> {
@@ -271,7 +308,10 @@ export async function listFeaturedProducts(limit = 8): Promise<ProductWithVarian
     .where(and(eq(products.active, true), eq(products.featured, true)))
     .orderBy(asc(products.sortOrder), asc(products.name))
     .limit(limit);
-  if (rows.length > 0) return attachVariants(rows, await listVariantsForProducts(rows.map((r) => r.id)));
+  if (rows.length > 0) {
+    const withVariants = attachVariants(rows, await listVariantsForProducts(rows.map((r) => r.id)));
+    return attachRatings(withVariants, await ratingsForProducts(rows.map((r) => r.id)));
+  }
   // Fall back to the newest active products so the home page is never empty.
   return listProducts({ sort: "newest", limit });
 }

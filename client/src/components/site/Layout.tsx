@@ -504,7 +504,7 @@ function Header() {
           <SearchField className="hidden md:flex" withCategory categories={cats} />
 
           <div className="hd-actions">
-            <div className="relative hidden lg:flex" ref={supportRef}>
+            <div className="relative hidden items-center lg:flex" ref={supportRef}>
               <button
                 type="button"
                 className="hd-action"

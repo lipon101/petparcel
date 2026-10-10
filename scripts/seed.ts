@@ -26,7 +26,7 @@ async function promoteToAdmin(email: string) {
 }
 
 async function main() {
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@petparcel.store";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "petparcel@proton.me";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "petparcel123";
   const customerEmail = process.env.SEED_CUSTOMER_EMAIL ?? "customer@petparcel.store";
   const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "petparcel123";

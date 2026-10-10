@@ -161,9 +161,11 @@ export function ProductCard({ product, index = 0 }: { product: StoreProduct; ind
           <Link to={`/product/${product.slug}`}>{product.name}</Link>
         </h3>
 
-        <div className="pb-1">
-          <Stars rating={product.featured ? 4.8 : 4.6} count={product.featured ? 128 : 64} />
-        </div>
+        {(product.reviewCount ?? 0) > 0 && (
+          <div className="pb-1">
+            <Stars rating={product.rating ?? 0} count={product.reviewCount} />
+          </div>
+        )}
 
         <div className="p-bottom">
           <div className="p-price">
