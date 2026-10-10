@@ -318,8 +318,14 @@ Then sign in at `/login`; the admin panel is at `/admin`.
 
 ## 4. Deploying to Vercel
 
-The app is a static client + a serverless API, so it deploys cleanly to Vercel's free tier.
-You need a hosted Postgres database (Vercel's own Postgres, **Neon** or **Supabase** all work).
+> **Read §0d first — the API needs one extra step on Vercel.** The committed `vercel.json`
+> builds and serves the static client, but the repo has no serverless function entry for
+> this app's single Hono process, so on Vercel the **API (`/trpc`, `/api`, `/app-storage`)
+> is not reachable** until an `api/` entry point is added and the catch-all rewrite is
+> narrowed to leave those prefixes alone. §0d documents the caveat, the exact env vars and
+> the two working alternatives (container host, or Vercel client + API elsewhere).
+
+The app is a static client + a Node API. You need a hosted Postgres database (Vercel's own Postgres, **Neon** or **Supabase** all work).
 
 1. **Create a database** (e.g. Neon) and copy its pooled connection string.
 2. **Push the repo to GitHub**, then in Vercel → *Add New Project* → import the repo.
