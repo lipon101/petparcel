@@ -8,7 +8,7 @@ import { useSeo } from "@/lib/petparcel";
 import { Section } from "@/components/site/Bits";
 
 const field =
-  "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function Register() {
   const { signup, user } = useAuth();
@@ -45,7 +45,7 @@ export default function Register() {
     <Section className="!pt-12">
       <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-2">
         <div className="card-soft p-8">
-          <h1 className="text-2xl font-extrabold">Create your account</h1>
+          <h1 className="text-2xl font-medium">Create your account</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">It takes about ten seconds.</p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -97,7 +97,7 @@ export default function Register() {
             </div>
 
             {error && (
-              <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+              <p role="alert" className="rounded-sm bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
                 {error}
               </p>
             )}
@@ -105,7 +105,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              className="btn btn-primary btn-md w-full"
             >
               {busy ? "Creating your account…" : "Create account"}
             </button>
@@ -120,7 +120,7 @@ export default function Register() {
         </div>
 
         <div className="lg:pt-8">
-          <h2 className="text-lg font-extrabold">Why make an account?</h2>
+          <h2 className="text-lg font-medium">Why make an account?</h2>
           <ul className="mt-4 space-y-3">
             {[
               "See every order and its live delivery status in one place.",
@@ -136,7 +136,7 @@ export default function Register() {
               </li>
             ))}
           </ul>
-          <p className="mt-6 rounded-2xl bg-secondary/60 p-4 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-6 rounded-lg bg-secondary/60 p-4 text-xs leading-relaxed text-muted-foreground">
             You don't have to register to shop. Guest checkout is fully supported — you'll still get an order
             number you can track any time.
           </p>

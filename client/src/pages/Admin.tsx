@@ -197,7 +197,11 @@ export function AdminDashboard() {
       {isLoading ? (
         <LoadingState rows={3} />
       ) : isError || !data ? (
-        <ErrorState title="We couldn't load the dashboard" onRetry={() => refetch()} />
+        <ErrorState
+          title="We couldn't load the dashboard"
+          body="A quick retry usually sorts this out."
+          onRetry={() => refetch()}
+        />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -1056,7 +1060,11 @@ export function AdminOrderDetail() {
   if (isError || !order) {
     return (
       <AdminShell title="Order" active="/admin/orders">
-        <ErrorState title="We couldn't load that order" onRetry={() => refetch()} />
+        <ErrorState
+          title="We couldn't load that order"
+          body="A quick retry usually sorts this out."
+          onRetry={() => refetch()}
+        />
         <div className="mt-4">
           <Link to="/admin/orders" className="text-sm font-semibold text-primary hover:underline">
             Back to orders

@@ -61,7 +61,7 @@ export default function Track() {
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
               placeholder="PP-XXXXXXXX"
-              className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 font-mono text-sm uppercase outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 font-mono text-sm uppercase outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -75,14 +75,14 @@ export default function Track() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div className="flex items-end">
             <button
               type="submit"
               disabled={isLoading}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 sm:w-auto"
+              className="btn btn-primary btn-md w-full gap-2 sm:w-auto"
             >
               <Search className="h-4 w-4" />
               {isLoading ? "Searching…" : "Track"}
@@ -127,7 +127,7 @@ export default function Track() {
                   </p>
                 </div>
                 <span
-                  className={`inline-flex rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset ${
+                  className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${
                     ORDER_STATUS_CLASS[order.status] ?? "bg-slate-100 text-slate-700 ring-slate-200"
                   }`}
                 >
@@ -145,7 +145,7 @@ export default function Track() {
                       return (
                         <li key={step} className="flex items-center gap-2">
                           <span
-                            className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                               done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             }`}
                           >
@@ -159,8 +159,8 @@ export default function Track() {
                 )}
 
                 {order.trackingNumber ? (
-                  <div className="rounded-2xl bg-secondary/60 p-4 text-sm">
-                    <p className="font-bold">
+                  <div className="rounded-lg bg-secondary/60 p-4 text-sm">
+                    <p className="font-semibold">
                       {order.carrier ?? "Carrier"} · <span className="font-mono">{order.trackingNumber}</span>
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -168,12 +168,12 @@ export default function Track() {
                     </p>
                   </div>
                 ) : (
-                  <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+                  <p className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
                     No tracking number yet — we add one the moment your parcel leaves the warehouse.
                   </p>
                 )}
 
-                <h3 className="mt-6 text-sm font-bold">Items in this order</h3>
+                <h3 className="mt-6 text-sm font-semibold">Items in this order</h3>
                 <ul className="mt-3 space-y-3">
                   {items.map((item) => (
                     <li key={item.id} className="flex items-center gap-3">
@@ -190,20 +190,20 @@ export default function Track() {
                           {item.variantSnapshot ? `${item.variantSnapshot} · ` : ""}Qty {item.qty}
                         </span>
                       </span>
-                      <span className="text-sm font-bold">{formatMoney(item.priceCents * item.qty)}</span>
+                      <span className="text-sm font-semibold">{formatMoney(item.priceCents * item.qty)}</span>
                     </li>
                   ))}
                 </ul>
 
                 <p className="mt-5 flex justify-between border-t border-border pt-4 text-sm">
-                  <span className="font-bold">Order total</span>
-                  <span className="font-extrabold">{formatMoney(order.totalCents)}</span>
+                  <span className="font-semibold">Order total</span>
+                  <span className="font-medium">{formatMoney(order.totalCents)}</span>
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     to={`/order/${order.orderNumber}`}
-                    className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="btn btn-primary btn-sm"
                   >
                     Full order details
                   </Link>

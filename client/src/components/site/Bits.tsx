@@ -1,14 +1,14 @@
 // Shared presentational building blocks used across every page. Keeping them in
 // one place is what makes the storefront look like one design instead of a set
-// of screens — spacing, badges, stars and the empty/loading/error trio all come
-// from here.
+// of screens — the section header rhythm, badges, stars, prices and the
+// empty/loading/error trio all come from here.
 import type { ReactNode } from "react";
 import { Link } from "wouter";
-import { Star } from "lucide-react";
+import { Truck, RotateCcw, ShieldCheck, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@shared/store";
 
-// ── Section wrapper: consistent vertical rhythm on every page ────────────────
+// ── Section wrapper: consistent vertical rhythm on every page ───────────────
 export function Section({
   children,
   className,
@@ -19,47 +19,77 @@ export function Section({
   muted?: boolean;
 }) {
   return (
-    <section className={cn("section", muted && "surface-mesh", className)}>
+    <section className={cn("section", muted && "sec-bg-soft", className)}>
       <div className="container-page">{children}</div>
     </section>
   );
 }
 
+/** The reference section header: a small tracked eyebrow over a light-weight
+ *  title, with an optional "View all" link pinned to the right. */
 export function SectionHeading({
   eyebrow,
   title,
   subtitle,
   action,
+  actionLabel = "View all",
+  actionTo,
   align = "left",
+  className,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  actionLabel?: string;
+  actionTo?: string;
   align?: "left" | "center";
+  className?: string;
 }) {
+  const right =
+    action ??
+    (actionTo ? (
+      <Link to={actionTo} className="view-all">
+        {actionLabel} 
+      </Link>
+    ) : null);
+
   return (
-    <div
-      className={cn(
-        "mb-8 flex flex-col gap-4 sm:mb-12",
-        align === "center" ? "items-center text-center" : "sm:flex-row sm:items-end sm:justify-between",
-      )}
-    >
-      <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
-        {eyebrow && (
-          <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
-            <span className="h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
-            {eyebrow}
+    <div className={cn("section-head", align === "center" && "justify-center", className)}>
+      <div className={cn(align === "center" ? "text-center" : "max-w-2xl")}>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        <h2 className="section-title">{title}</h2>
+        {subtitle && (
+          <p className={cn("mt-3 text-[14.5px] leading-relaxed text-gray", align === "center" && "mx-auto max-w-2xl")}>
+            {subtitle}
           </p>
         )}
-        <h2 className="text-[1.7rem] font-extrabold leading-[1.12] sm:text-4xl lg:text-[2.6rem]">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground sm:text-base">{subtitle}</p>
-        )}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {right && <div className="shrink-0">{right}</div>}
+    </div>
+  );
+}
+
+/** Inner-page header band: soft teal wash, centred title, optional sub-line. */
+export function PageHeader({
+  eyebrow,
+  title,
+  subtitle,
+  children,
+}: {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="page-hero">
+      <div className="container-page">
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        <h1 className="page-title">{title}</h1>
+        {subtitle && <p className="page-sub">{subtitle}</p>}
+        {children && <div className="mt-6">{children}</div>}
+      </div>
     </div>
   );
 }
@@ -86,7 +116,7 @@ export function Reveal({
   );
 }
 
-// ── Badges & chips ────────────────────────────────────────────────────────────
+// ── Badges & chips ──────────────────────────────────────────────────────────
 export function Chip({
   children,
   tone = "muted",
@@ -97,84 +127,103 @@ export function Chip({
   className?: string;
 }) {
   const tones: Record<string, string> = {
-    muted: "bg-card/95 text-muted-foreground ring-1 ring-inset ring-border backdrop-blur",
-    teal: "bg-secondary text-secondary-foreground ring-1 ring-inset ring-primary/15",
-    coral: "bg-accent text-accent-foreground shadow-sm",
-    amber: "bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200",
-    green: "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200",
-    slate: "bg-slate-900/85 text-white backdrop-blur",
+    muted: "bg-blush text-gray",
+    teal: "bg-teal-soft text-teal-deep",
+    coral: "bg-coral text-white",
+    amber: "bg-amber-100 text-amber-900",
+    green: "bg-emerald-100 text-emerald-800",
+    slate: "bg-ink/85 text-white backdrop-blur",
   };
-  return (
-    <span className={cn("pill shadow-xs", tones[tone], className)}>{children}</span>
-  );
+  return <span className={cn("pill", tones[tone], className)}>{children}</span>;
+}
+
+/** The reference product badge — a small rounded uppercase label in the corner
+ *  of a product image. */
+export function Badge({
+  children,
+  variant = "sale",
+  className,
+}: {
+  children: ReactNode;
+  variant?: "new" | "best" | "sale" | "out";
+  className?: string;
+}) {
+  const variants = {
+    new: "badge badge-new",
+    best: "badge badge-best",
+    sale: "badge badge-sale",
+    out: "badge badge-out",
+  } as const;
+  return <span className={cn(variants[variant], className)}>{children}</span>;
 }
 
 export function Stars({
   rating,
-  size = 14,
+  size = 13,
   showValue = false,
   count,
+  className,
 }: {
   rating: number;
   size?: number;
   showValue?: boolean;
   count?: number;
+  className?: string;
 }) {
+  const rounded = Math.round(rating);
   return (
     <span
-      className="inline-flex items-center gap-1.5"
+      className={cn("p-rating", className)}
       aria-label={`${rating.toFixed(1)} out of 5 stars`}
     >
-      <span className="inline-flex items-center gap-0.5">
+      <span className="stars" aria-hidden="true">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Star
+          <svg
             key={i}
+            className={cn("star", i <= rounded && "filled")}
             width={size}
             height={size}
-            className={cn(
-              i <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted",
-            )}
-          />
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
         ))}
       </span>
-      {showValue && (
-        <span className="text-xs font-bold tracking-tight text-foreground">{rating.toFixed(1)}</span>
-      )}
-      {typeof count === "number" && <span className="text-xs text-muted-foreground">({count})</span>}
+      {showValue && <span className="text-[12.5px] font-semibold text-ink">{rating.toFixed(1)}</span>}
+      {typeof count === "number" && <span className="rating-count">({count})</span>}
     </span>
   );
 }
 
+/** Price line: coral current price with an optional struck-through was-price. */
 export function PriceTag({
   priceCents,
   compareAtCents,
   size = "md",
+  className,
 }: {
   priceCents: number;
   compareAtCents?: number | null;
   size?: "sm" | "md" | "lg";
+  className?: string;
 }) {
   const sizes = {
-    sm: "text-base",
-    md: "text-lg",
-    lg: "text-2xl sm:text-3xl",
+    sm: "text-[16px]",
+    md: "text-[18px]",
+    lg: "text-[26px] sm:text-[30px]",
   } as const;
   const onSale = typeof compareAtCents === "number" && compareAtCents > priceCents;
   return (
-    <span className="inline-flex flex-wrap items-baseline gap-2">
-      <span className={cn("font-extrabold tracking-tight", sizes[size])}>
-        {formatMoney(priceCents)}
+    <span className={cn("p-price", className)}>
+      <span className="price-now" style={{ fontSize: size === "lg" ? undefined : undefined }}>
+        <span className={cn(size !== "md" && sizes[size])}>{formatMoney(priceCents)}</span>
       </span>
-      {onSale && (
-        <span className="text-sm font-medium text-muted-foreground line-through">
-          {formatMoney(compareAtCents)}
-        </span>
-      )}
+      {onSale && <span className="price-was">{formatMoney(compareAtCents)}</span>}
     </span>
   );
 }
 
-// ── The designed empty / loading / error trio ────────────────────────────────
+// ── The designed empty / loading / error trio ──────────────────────────────
 export function EmptyState({
   icon,
   title,
@@ -187,12 +236,12 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="card-premium flex flex-col items-center gap-3 px-6 py-16 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
+    <div className="card-soft flex flex-col items-center gap-3 px-6 py-16 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal-soft text-teal">
         {icon ?? <span className="text-2xl">🐾</span>}
       </div>
-      <h3 className="mt-1 text-lg font-bold">{title}</h3>
-      <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{body}</p>
+      <h3 className="mt-1 text-lg font-medium">{title}</h3>
+      <p className="max-w-md text-sm leading-relaxed text-gray">{body}</p>
       {action && <div className="mt-3">{action}</div>}
     </div>
   );
@@ -200,10 +249,14 @@ export function EmptyState({
 
 export function LoadingState({ label = "Loading…", rows = 3 }: { label?: string; rows?: number }) {
   return (
-    <div className="space-y-3" role="status" aria-live="polite">
+    <div className="space-y-3" aria-busy="true" aria-live="polite">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+        <div
+          key={i}
+          className="h-14 animate-pulse rounded-xl border border-line-soft bg-white"
+          style={{ animationDelay: `${i * 90}ms` }}
+        />
       ))}
     </div>
   );
@@ -211,12 +264,16 @@ export function LoadingState({ label = "Loading…", rows = 3 }: { label?: strin
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+    <div className="grid-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-3">
-          <div className="aspect-square animate-pulse rounded-2xl bg-muted" />
-          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-          <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+        <div key={i} className="overflow-hidden rounded-[14px] border border-line-soft bg-white">
+          <div className="aspect-square animate-pulse bg-blush" />
+          <div className="space-y-2.5 p-3.5">
+            <div className="h-2.5 w-16 animate-pulse rounded bg-blush" />
+            <div className="h-3.5 w-full animate-pulse rounded bg-blush" />
+            <div className="h-3.5 w-2/3 animate-pulse rounded bg-blush" />
+            <div className="h-5 w-20 animate-pulse rounded bg-blush" />
+          </div>
         </div>
       ))}
     </div>
@@ -225,11 +282,11 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 
 export function ErrorState({
   title = "Something went wrong",
-  body = "We couldn't load this just now. Try again in a moment.",
+  body = "Something went wrong on our end. Retrying usually fixes it.",
   onRetry,
 }: {
   title?: string;
-  body?: string;
+  body: string;
   onRetry?: () => void;
 }) {
   return (
@@ -239,11 +296,7 @@ export function ErrorState({
       body={body}
       action={
         onRetry ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className={cn(buttonStyles.primary, buttonStyles.sizes.md, "btn-sheen")}
-          >
+          <button type="button" onClick={onRetry} className="btn btn-primary btn-md">
             Try again
           </button>
         ) : undefined
@@ -252,58 +305,47 @@ export function ErrorState({
   );
 }
 
-// ── Trust strip: the social-proof band that appears under the hero ───────────
+// ── Feature strip: the four-icon band under the hero ───────────────────────
+const FEATURE_ICONS = [Truck, RotateCcw, ShieldCheck, Headset] as const;
+
 export function TrustStrip({
   items,
 }: {
   items: readonly { title: string; body: string }[];
 }) {
   return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {items.map((item) => (
-        <li
-          key={item.title}
-          className="card-premium flex items-start gap-3.5 p-5"
-        >
-          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary ring-1 ring-inset ring-primary/12">
-            ✓
-          </span>
-          <span>
-            <span className="block text-sm font-bold">{item.title}</span>
-            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-              {item.body}
+    <div className="features-grid">
+      {items.map((item, i) => {
+        const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+        return (
+          <div key={item.title} className="feature-item">
+            <span className="feature-ic">
+              <Icon className="h-5 w-5" />
             </span>
-          </span>
-        </li>
-      ))}
-    </ul>
+            <span>
+              <span className="feature-title block">{item.title}</span>
+              <span className="feature-sub block">{item.body}</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
-// ── Buttons (anchor-friendly) ────────────────────────────────────────────────
-const buttonBase =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold tracking-tight transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-
-export type ButtonVariant = "primary" | "accent" | "outline" | "ghost";
+// ── Buttons (anchor-friendly) ──────────────────────────────────────────────
+export type ButtonVariant = "primary" | "accent" | "ink" | "outline" | "ghost";
 
 export const buttonStyles = {
-  primary: cn(
-    buttonBase,
-    "btn-sheen bg-primary text-primary-foreground shadow-[var(--shadow-md)] hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-[var(--shadow-lg)] active:translate-y-0",
-  ),
-  accent: cn(
-    buttonBase,
-    "btn-sheen bg-accent text-accent-foreground shadow-[var(--shadow-md)] hover:-translate-y-0.5 hover:bg-accent/92 hover:shadow-[var(--shadow-lg)] active:translate-y-0",
-  ),
-  outline: cn(
-    buttonBase,
-    "border border-border bg-card text-foreground shadow-xs hover:-translate-y-0.5 hover:border-primary/40 hover:bg-secondary/60 hover:shadow-[var(--shadow-sm)] active:translate-y-0",
-  ),
-  ghost: cn(buttonBase, "text-foreground hover:bg-secondary/70"),
+  primary: "btn btn-primary",
+  accent: "btn btn-accent",
+  ink: "btn btn-ink",
+  outline: "btn btn-outline",
+  ghost: "btn btn-ghost",
   sizes: {
-    sm: "h-9.5 px-4 text-[13px]",
-    md: "h-11 px-6 text-sm",
-    lg: "h-13 px-8 text-[15px]",
+    sm: "btn-sm",
+    md: "btn-md",
+    lg: "btn-lg",
   },
 };
 
@@ -333,19 +375,19 @@ export function CtaLink({
   );
 }
 
-// ── Breadcrumbs ──────────────────────────────────────────────────────────────
+// ── Breadcrumbs ────────────────────────────────────────────────────────────
 export function Breadcrumbs({ trail }: { trail: { label: string; to?: string }[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+    <nav aria-label="Breadcrumb" className="mb-5">
+      <ol className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-gray">
         {trail.map((crumb, i) => (
           <li key={`${crumb.label}-${i}`} className="flex items-center gap-2">
             {crumb.to ? (
-              <Link to={crumb.to} className="transition hover:text-foreground hover:underline">
+              <Link to={crumb.to} className="transition-colors hover:text-coral">
                 {crumb.label}
               </Link>
             ) : (
-              <span className="font-semibold text-foreground">{crumb.label}</span>
+              <span className="text-ink">{crumb.label}</span>
             )}
             {i < trail.length - 1 && <span aria-hidden="true">/</span>}
           </li>
@@ -365,15 +407,15 @@ export function PolicyPage({
   children: ReactNode;
 }) {
   return (
-    <Section>
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">{title}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Last updated {updated}</p>
-        <div className="divider-glow my-8" />
-        <div className="space-y-6 text-[15px] leading-relaxed text-muted-foreground [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-foreground [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-foreground [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
-          {children}
+    <>
+      <PageHeader eyebrow="Customer care" title={title} subtitle={`Last updated ${updated}`} />
+      <Section>
+        <div className="mx-auto max-w-3xl">
+          <div className="space-y-6 text-[15px] leading-relaxed text-gray [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-medium [&_h2]:text-ink [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-ink [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
+            {children}
+          </div>
         </div>
-      </div>
-    </Section>
+      </Section>
+    </>
   );
 }

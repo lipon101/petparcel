@@ -1,11 +1,18 @@
 // Product card + the reusable "add to cart" behavior shared by the grid and the
 // product detail page.
+//
+// The card mirrors the reference storefront exactly: a square image well that
+// zooms on hover, a corner badge, a wishlist heart, then the body — a small
+// gold tracked category label, the product name, a star rating, the price line
+// (coral now-price over a struck-through was-price) and a round coral
+// add-to-cart button pinned bottom-right.
 import { useState } from "react";
 import { Link } from "wouter";
-import { Check, ShoppingBag } from "lucide-react";
+import { Check, Heart, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/petparcel";
-import { Chip, PriceTag, Stars } from "./Bits";
+import { Badge, Stars } from "./Bits";
+import { formatMoney } from "@shared/store";
 import type { StoreProduct } from "@/lib/types";
 
 export type { StoreProduct } from "@/lib/types";
@@ -67,17 +74,39 @@ export function AddToCartButton({
         addToCart({ product, variant });
       }}
       className={cn(
-        "btn-sheen inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-tight transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-55",
-        justAdded
-          ? "bg-emerald-600 text-white shadow-[var(--shadow-md)]"
-          : "bg-primary text-primary-foreground shadow-xs hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-[var(--shadow-md)]",
-        size === "sm" ? "h-9.5 px-4 text-[13px]" : size === "lg" ? "h-12 px-7 text-[15px]" : "h-11 px-5 text-sm",
+        "btn",
+        justAdded ? "btn-accent" : "btn-primary",
+        size === "sm" ? "btn-sm" : size === "lg" ? "btn-lg" : "btn-md",
         className,
       )}
       aria-label={soldOut ? `${product.name} is sold out` : `Add ${product.name} to cart`}
     >
-      {justAdded ? <Check className="h-4 w-4" /> : withIcon ? <ShoppingBag className="h-4 w-4" /> : null}
-      {soldOut ? "Sold out" : justAdded ? "Added" : "Add to cart"}
+      {justAdded ? <Check className="h-4 w-4" /> : withIcon ? <ShoppingCart className="h-4 w-4" /> : null}
+      {soldOut ? "Sold out" : justAdded ? "Added to cart" : "Add to cart"}
+    </button>
+  );
+}
+
+/** The round quick-add button that sits in the corner of a grid card. Always
+ *  rendered (never hover-gated) so touch and keyboard users can reach it. */
+function QuickAdd({ product }: { product: StoreProduct }) {
+  const { addToCart, justAdded } = useAddToCart();
+  const soldOut = totalStock(product) <= 0;
+
+  return (
+    <button
+      type="button"
+      disabled={soldOut}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToCart({ product, variant: null });
+      }}
+      className={cn("p-cartbtn", soldOut && "cursor-not-allowed opacity-45")}
+      aria-label={soldOut ? `${product.name} is sold out` : `Add ${product.name} to cart`}
+      title={soldOut ? "Sold out" : "Add to cart"}
+    >
+      {justAdded ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
     </button>
   );
 }
@@ -86,67 +115,63 @@ export function ProductCard({ product, index = 0 }: { product: StoreProduct; ind
   const stock = totalStock(product);
   const onSale =
     typeof product.compareAtCents === "number" && product.compareAtCents > product.priceCents;
-  const discountPct = onSale
-    ? Math.round((1 - product.priceCents / (product.compareAtCents as number)) * 100)
-    : 0;
+  const [wished, setWished] = useState(false);
 
   return (
-    <article
-      className="card-premium group flex flex-col overflow-hidden"
-      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
-    >
-      <Link
-        to={`/product/${product.slug}`}
-        className="relative block overflow-hidden bg-muted"
-        aria-label={product.name}
-      >
-        <div className="aspect-square w-full">
+    <article className="p-card animate-in-up" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
+      <div className="p-media">
+        <Link to={`/product/${product.slug}`} aria-label={product.name}>
           {product.images[0] ? (
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.07]"
-            />
+            <img src={product.images[0]} alt={product.name} loading="lazy" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl">🐾</div>
+            <span className="flex h-full w-full items-center justify-center text-4xl">🐾</span>
           )}
-        </div>
-        {/* Subtle darkening on hover so the photo reads as interactive. */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-          {onSale && <Chip tone="coral">Save {discountPct}%</Chip>}
-          {product.featured && !onSale && <Chip tone="teal">Best seller</Chip>}
-          {stock > 0 && stock <= 5 && <Chip tone="amber">Only {stock} left</Chip>}
-          {stock <= 0 && <Chip tone="slate">Sold out</Chip>}
-        </div>
-      </Link>
+        </Link>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {onSale ? (
+          <Badge variant="sale">
+            −{Math.round((1 - product.priceCents / (product.compareAtCents as number)) * 100)}%
+          </Badge>
+        ) : product.featured ? (
+          <Badge variant="best">Best seller</Badge>
+        ) : stock <= 0 ? (
+          <Badge variant="out">Sold out</Badge>
+        ) : null}
+
+        <button
+          type="button"
+          className="heart-btn"
+          aria-label={wished ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+          aria-pressed={wished}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setWished((v) => !v);
+          }}
+        >
+          <Heart className={cn("h-4 w-4", wished && "fill-coral text-coral")} />
+        </button>
+      </div>
+
+      <div className="p-body">
+        <Link to={`/shop?category=${encodeURIComponent(product.category)}`} className="p-cat">
           {product.category}
-        </p>
-        <h3 className="mt-1.5 text-sm font-bold leading-snug">
-          <Link
-            to={`/product/${product.slug}`}
-            className="transition-colors hover:text-primary"
-          >
-            {product.name}
-          </Link>
+        </Link>
+        <h3 className="p-name">
+          <Link to={`/product/${product.slug}`}>{product.name}</Link>
         </h3>
 
-        <div className="mt-2">
-          <Stars rating={product.featured ? 4.8 : 4.6} />
+        <div className="pb-1">
+          <Stars rating={product.featured ? 4.8 : 4.6} count={product.featured ? 128 : 64} />
         </div>
 
-        <div className="mt-3 flex items-end justify-between gap-2">
-          <PriceTag priceCents={product.priceCents} compareAtCents={product.compareAtCents} />
+        <div className="p-bottom">
+          <div className="p-price">
+            <span className="price-now">{formatMoney(product.priceCents)}</span>
+            {onSale && <span className="price-was">{formatMoney(product.compareAtCents)}</span>}
+          </div>
+          <QuickAdd product={product} />
         </div>
-
-        <div className="mt-4 flex-1" />
-        {/* Always visible — never hover- or breakpoint-gated, so it works for
-            touch, keyboard and mouse alike. */}
-        <AddToCartButton product={product} variant={null} size="sm" className="w-full" />
       </div>
     </article>
   );
@@ -154,7 +179,7 @@ export function ProductCard({ product, index = 0 }: { product: StoreProduct; ind
 
 export function ProductGrid({ products }: { products: StoreProduct[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+    <div className="grid-4">
       {products.map((p, i) => (
         <ProductCard key={p.id} product={p} index={i} />
       ))}

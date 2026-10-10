@@ -21,8 +21,8 @@ export function About() {
     <>
       <Section className="!pt-12">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">About PetParcel</p>
-          <h1 className="mt-3 text-3xl font-extrabold sm:text-4xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">About PetParcel</p>
+          <h1 className="mt-3 text-3xl font-medium sm:text-4xl">
             A small catalog, chosen carefully
           </h1>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
@@ -41,7 +41,7 @@ export function About() {
             { stat: "3–6 days", label: "Typical US delivery" },
           ].map((item) => (
             <div key={item.label} className="card-soft p-6 text-center">
-              <p className="text-3xl font-extrabold text-primary">{item.stat}</p>
+              <p className="text-3xl font-medium text-primary">{item.stat}</p>
               <p className="mt-1 text-sm text-muted-foreground">{item.label}</p>
             </div>
           ))}
@@ -50,7 +50,7 @@ export function About() {
 
       <Section>
         <div className="mx-auto max-w-3xl space-y-6 text-[15px] leading-relaxed text-muted-foreground">
-          <h2 className="text-xl font-bold text-foreground">How we choose what to stock</h2>
+          <h2 className="text-xl font-semibold text-foreground">How we choose what to stock</h2>
           <p>
             Every product is bought and used by someone on our team — usually with a dog or cat actively
             interfering. If it falls apart, sheds dye, smells odd, or gets ignored for a fortnight, it doesn't
@@ -61,7 +61,7 @@ export function About() {
             three-week wait for a replacement harness isn't a real option when yours has just snapped.
           </p>
 
-          <h2 className="text-xl font-bold text-foreground">How we treat customers</h2>
+          <h2 className="text-xl font-semibold text-foreground">How we treat customers</h2>
           <p>
             Free shipping over $49, a flat $5.99 below it, and a 30-day return window on everything. If
             something arrives damaged, we replace it and cover the label. Support is answered by humans in
@@ -76,7 +76,7 @@ export function About() {
 
       <Section muted>
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-2xl font-extrabold">Questions before you buy?</h2>
+          <h2 className="text-2xl font-medium">Questions before you buy?</h2>
           <p className="mt-3 text-sm text-muted-foreground">
             We answer every message within one business day.
           </p>
@@ -125,11 +125,11 @@ export function Faq() {
         <div className="space-y-8">
           {FAQ_SECTIONS.map((section) => (
             <div key={section.heading}>
-              <h2 className="text-lg font-extrabold">{section.heading}</h2>
+              <h2 className="text-lg font-medium">{section.heading}</h2>
               <div className="mt-3 space-y-3">
                 {section.items.map((item) => (
                   <details key={item.q} className="card-soft group p-5 [&_summary::-webkit-details-marker]:hidden">
-                    <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-bold">
+                    <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-semibold">
                       {item.q}
                       <Plus className="h-4 w-4 shrink-0 text-primary transition group-open:rotate-45" />
                     </summary>
@@ -140,7 +140,7 @@ export function Faq() {
             </div>
           ))}
         </div>
-        <div className="mt-10 rounded-2xl bg-secondary/60 p-6 text-center">
+        <div className="mt-10 rounded-lg bg-secondary/60 p-6 text-center">
           <p className="text-sm font-semibold">Still stuck?</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Email {s.contact_email} or call {s.contact_phone}. {s.support_hours}.
@@ -252,7 +252,7 @@ export function ShippingReturns() {
               <Icon className="h-4 w-4" />
             </span>
             <span>
-              <span className="block text-sm font-bold text-foreground">{title}</span>
+              <span className="block text-sm font-semibold text-foreground">{title}</span>
               <span className="mt-0.5 block text-xs">{body}</span>
             </span>
           </div>
@@ -495,11 +495,11 @@ export function Contact() {
               { icon: MapPin, label: "Address", value: s.business_address },
             ].map(({ icon: Icon, label, value, href }) => (
               <div key={label} className="card-soft flex items-start gap-3 p-5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-secondary text-primary">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span>
-                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {label}
                   </span>
                   {href ? (
@@ -514,7 +514,7 @@ export function Contact() {
             ))}
 
             <div className="card-soft p-5">
-              <h2 className="text-sm font-bold">Faster than emailing: track it yourself</h2>
+              <h2 className="text-sm font-semibold">Faster than emailing: track it yourself</h2>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                 If your question is "where is my parcel?", the tracking page shows the live status and carrier
                 reference without waiting for a reply.
@@ -528,10 +528,10 @@ export function Contact() {
           {/* Support form — this collects a message for the support inbox shown
               on the page. It does not transmit credentials of any kind. */}
           <div className="card-soft p-6">
-            <h2 className="text-lg font-extrabold">Send us a message</h2>
+            <h2 className="text-lg font-medium">Send us a message</h2>
             {sent ? (
-              <div className="mt-4 rounded-2xl bg-secondary/60 p-6 text-center">
-                <p className="text-sm font-bold">Thanks — we've got it.</p>
+              <div className="mt-4 rounded-lg bg-secondary/60 p-6 text-center">
+                <p className="text-sm font-semibold">Thanks — we've got it.</p>
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   We reply within one business day, usually much sooner. Check your spam folder if you don't see
                   us.
@@ -552,7 +552,7 @@ export function Contact() {
                   <input
                     id="contact-name"
                     required
-                    className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div>
@@ -563,7 +563,7 @@ export function Contact() {
                     id="contact-email"
                     type="email"
                     required
-                    className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div>
@@ -572,7 +572,7 @@ export function Contact() {
                   </label>
                   <select
                     id="contact-topic"
-                    className="mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
                     {CONTACT_TOPICS.map((t) => (
                       <option key={t}>{t}</option>
@@ -587,13 +587,13 @@ export function Contact() {
                     id="contact-message"
                     required
                     rows={5}
-                    className="mt-1.5 w-full rounded-xl border border-input bg-card p-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-sm border border-input bg-card p-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     placeholder="Include your order number if it's about an existing order."
                   />
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex h-11 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                  className="btn btn-primary btn-md w-full"
                 >
                   Send message
                 </button>
@@ -631,7 +631,7 @@ export function NotFound() {
     <Section className="!pt-20">
       <div className="mx-auto max-w-lg text-center">
         <p className="text-6xl">🐾</p>
-        <h1 className="mt-4 text-3xl font-extrabold">This page went walkies</h1>
+        <h1 className="mt-4 text-3xl font-medium">This page went walkies</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           We couldn't find what you were looking for. It may have moved, or the link might be mistyped.
         </p>

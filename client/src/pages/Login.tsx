@@ -8,7 +8,7 @@ import { useSeo } from "@/lib/petparcel";
 import { Section } from "@/components/site/Bits";
 
 const field =
-  "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function Login() {
   const { login, user } = useAuth();
@@ -47,7 +47,7 @@ export default function Login() {
     <Section className="!pt-12">
       <div className="mx-auto max-w-md">
         <div className="card-soft p-8">
-          <h1 className="text-2xl font-extrabold">Welcome back</h1>
+          <h1 className="text-2xl font-medium">Welcome back</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
             Sign in to track orders and check out faster.
           </p>
@@ -90,7 +90,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+              <p role="alert" className="rounded-sm bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
                 {error}
               </p>
             )}
@@ -98,7 +98,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              className="btn btn-primary btn-md w-full"
             >
               {busy ? "Signing in…" : "Sign in"}
             </button>

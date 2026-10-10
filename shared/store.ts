@@ -4,7 +4,7 @@ export const STORE_NAME = "PetParcel";
 export const STORE_DOMAIN = "www.petparcel.store";
 export const STORE_URL = `https://${STORE_DOMAIN}`;
 
-// ── Order lifecycle ─────────────────────────────────────────────────────────
+// ── Order lifecycle ──────────────────────────────────────────────────────────
 export const ORDER_STATUSES = [
   "pending",
   "paid",
@@ -20,10 +20,10 @@ export const PAYMENT_STATUSES = ["unpaid", "paid", "failed", "refunded"] as cons
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<string, string> = {
-  pending: "Pending payment",
+  pending: "Awaiting payment",
   paid: "Paid",
-  processing: "Preparing your parcel",
-  shipped: "Shipped",
+  processing: "Packing your order",
+  shipped: "On its way",
   delivered: "Delivered",
   cancelled: "Cancelled",
   refunded: "Refunded",
@@ -49,7 +49,7 @@ export const ORDER_TIMELINE: OrderStatus[] = [
   "delivered",
 ];
 
-// ── Address snapshot stored on an order ─────────────────────────────────────
+// ── Address snapshot stored on an order ──────────────────────────────────────
 export interface AddressSnapshot {
   fullName: string;
   line1: string;
@@ -61,7 +61,7 @@ export interface AddressSnapshot {
   phone?: string | null;
 }
 
-// ── Store settings ──────────────────────────────────────────────────────────
+// ── Store settings ───────────────────────────────────────────────────────────
 export interface SettingsMap {
   brand_name: string;
   tagline: string;
@@ -83,11 +83,11 @@ export interface SettingsMap {
 
 export const SETTINGS_DEFAULTS: SettingsMap = {
   brand_name: "PetParcel",
-  tagline: "Happy pets, delivered to your door.",
-  announcement: "Free US shipping on orders over $49 · 30-day happy-pet returns",
-  hero_headline: "Everything your best friend needs",
+  tagline: "Good gear for the ones who wait by the door.",
+  announcement: "Free US shipping over $49 · 30-day returns · Ships in 1 business day",
+  hero_headline: "Everything they'd pick themselves",
   hero_subhead:
-    "Vet-approved toys, beds, and gear for dogs and cats — shipped free across the USA from our US warehouses.",
+    "Beds, harnesses, bowls and toys we've tried on our own dogs and cats. Free US shipping over $49, and 30 days to change your mind.",
   contact_email: "support@petparcel.store",
   contact_phone: "+1 (800) 555-0142",
   support_hours: "Mon–Fri, 9am–6pm EST",
@@ -128,7 +128,7 @@ export const SETTINGS_FIELDS: {
   { key: "currency", label: "Currency code", type: "text", group: "Shipping & tax" },
 ];
 
-// ── Formatting helpers shared by client and server ──────────────────────────
+// ── Formatting helpers shared by client and server ───────────────────────────
 export function formatMoney(cents: number | null | undefined, currency = "USD"): string {
   const value = (cents ?? 0) / 100;
   try {
@@ -215,8 +215,8 @@ export function sortCategories(list: string[]): string[] {
 }
 
 export const TRUST_BADGES = [
-  { title: "Free US shipping", body: "On every order over $49, coast to coast." },
-  { title: "30-day returns", body: "Not a hit with your pet? Send it back, no drama." },
-  { title: "Secure checkout", body: "256-bit encrypted payments. We never store card data." },
-  { title: "US-based support", body: "Real humans in Wilmington, DE — Mon–Fri, 9am–6pm EST." },
+  { title: "Free US shipping", body: "On every order over $49, anywhere in the country." },
+  { title: "30-day returns", body: "Didn't work out? Send it back for a full refund." },
+  { title: "Secure checkout", body: "Card details are handled by our payment provider, never by us." },
+  { title: "Real support", body: "Questions answered by people in Wilmington, Delaware." },
 ] as const;

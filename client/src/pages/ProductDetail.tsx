@@ -1,12 +1,14 @@
-// Product detail — gallery, variant picker, quantity, add to cart, reviews and
-// related products. Emits schema.org Product JSON-LD for rich results.
+// Product detail — a thumbnail rail beside the main image, the buy box, variant
+// picker, quantity, reviews and related products. Emits schema.org Product
+// JSON-LD so the listing can earn rich results in Google.
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "wouter";
-import { ArrowRight, Check, Minus, Plus, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+import { Check, Minus, Plus, ShieldCheck, Truck, RotateCcw } from "lucide-react";
 import { trpc } from "@/_core/trpc";
 import { useSeo, averageRating } from "@/lib/petparcel";
 import { STORE_URL, formatDate, formatMoney } from "@shared/store";
 import {
+  Badge,
   Breadcrumbs,
   Chip,
   CtaLink,
@@ -16,12 +18,14 @@ import {
   SectionHeading,
   Stars,
 } from "@/components/site/Bits";
-import { AddToCartButton, ProductCard, totalStock, type StoreProduct } from "@/components/site/ProductCard";
+import { AddToCartButton, ProductGrid, totalStock, type StoreProduct } from "@/components/site/ProductCard";
+import { useSite } from "@/components/site/Layout";
 import { cn } from "@/lib/utils";
 
 export default function ProductDetail() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? "";
+  const s = useSite();
   const { data, isLoading, isError } = trpc.catalog.bySlug.useQuery({ slug });
   const product = data?.product;
   const reviews = data?.reviews ?? [];
@@ -44,8 +48,10 @@ export default function ProductDetail() {
   const displayPrice = selected?.priceCents ?? product?.priceCents ?? 0;
   const stock = selected ? selected.inventoryQty : product ? totalStock(product as StoreProduct) : 0;
   const images = product?.images?.length ? product.images : [];
-
+  const onSale =
+    typeof product?.compareAtCents === "number" && product.compareAtCents > displayPrice;
   const rating = averageRating(reviews.map((r) => r.rating));
+  const freeShip = (s.free_shipping_threshold_cents / 100).toFixed(0);
 
   useSeo(
     useMemo(
@@ -68,16 +74,14 @@ export default function ProductDetail() {
                 description: product.description,
                 sku: selected?.sku ?? undefined,
                 category: product.category,
-                brand: { "@type": "Brand", name: "PetParcel" },
+                brand: { "@type": "Brand", name: s.brand_name },
                 offers: {
                   "@type": "Offer",
                   url: `${STORE_URL}/product/${product.slug}`,
                   priceCurrency: "USD",
                   price: (displayPrice / 100).toFixed(2),
                   availability:
-                    stock > 0
-                      ? "https://schema.org/InStock"
-                      : "https://schema.org/OutOfStock",
+                    stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                   itemCondition: "https://schema.org/NewCondition",
                   shippingDetails: {
                     "@type": "OfferShippingDetails",
@@ -96,19 +100,19 @@ export default function ProductDetail() {
               }
             : null,
       }),
-      [product?.id, slug, displayPrice, stock, images[0], reviews.length, rating],
+      [product?.id, slug, displayPrice, stock, images[0], reviews.length, rating, s.brand_name],
     ),
   );
 
   if (isLoading) {
     return (
-      <Section className="!pt-8">
+      <Section className="!pt-10">
         <div className="grid gap-10 lg:grid-cols-2">
-          <div className="aspect-square animate-pulse rounded-2xl bg-muted" />
+          <div className="aspect-square animate-pulse rounded-[18px] bg-blush" />
           <div className="space-y-4">
-            <div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
-            <div className="h-24 animate-pulse rounded bg-muted" />
+            <div className="h-8 w-3/4 animate-pulse rounded bg-blush" />
+            <div className="h-5 w-1/3 animate-pulse rounded bg-blush" />
+            <div className="h-24 animate-pulse rounded bg-blush" />
           </div>
         </div>
       </Section>
@@ -117,25 +121,29 @@ export default function ProductDetail() {
 
   if (isError || !product) {
     return (
-      <Section className="!pt-8">
-        <Breadcrumbs trail={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: "Not found" }]} />
-        <EmptyState
-          icon={<span className="text-2xl">🔍</span>}
-          title="We couldn't find that product"
-          body="It may have sold out or been renamed. Browse the catalog — we keep the range small on purpose."
-          action={
-            <CtaLink to="/shop" variant="outline">
-              Browse all products
-            </CtaLink>
-          }
-        />
-      </Section>
+      <>
+        <Section className="!pt-10">
+          <Breadcrumbs
+            trail={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: "Not found" }]}
+          />
+          <EmptyState
+            icon={<span className="text-2xl">🔍</span>}
+            title="We couldn't find that product"
+            body="It may have sold out or been renamed. Browse the catalogue — we keep the range small on purpose."
+            action={
+              <CtaLink to="/shop" variant="outline">
+                Browse all products
+              </CtaLink>
+            }
+          />
+        </Section>
+      </>
     );
   }
 
   return (
     <>
-      <Section className="!pt-8 !pb-10">
+      <Section className="!pt-10 !pb-12">
         <Breadcrumbs
           trail={[
             { label: "Home", to: "/" },
@@ -145,10 +153,31 @@ export default function ProductDetail() {
           ]}
         />
 
-        <div className="grid gap-10 lg:grid-cols-2">
-          {/* ── Gallery ───────────────────────────────────────────────── */}
-          <div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-muted">
+        <div className="grid gap-12 lg:grid-cols-2">
+          {/* ── Gallery ──────────────────────────────────────────────────────── */}
+          <div className={cn(images.length > 1 && "flex gap-4")}>
+            {images.length > 1 && (
+              <div className="flex w-[74px] shrink-0 flex-col gap-3">
+                {images.map((img, i) => (
+                  <button
+                    key={img + i}
+                    type="button"
+                    onClick={() => setActiveImage(i)}
+                    className={cn(
+                      "aspect-square w-full overflow-hidden rounded-xl border-2 bg-blush transition-all",
+                      i === activeImage
+                        ? "border-teal"
+                        : "border-transparent opacity-65 hover:opacity-100",
+                    )}
+                    aria-label={`View image ${i + 1}`}
+                  >
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="relative flex-1 overflow-hidden rounded-[18px] border border-line bg-blush">
               <div className="aspect-square w-full">
                 {images[activeImage] ? (
                   <img
@@ -160,42 +189,33 @@ export default function ProductDetail() {
                   <div className="flex h-full w-full items-center justify-center text-5xl">🐾</div>
                 )}
               </div>
+              {onSale ? (
+                <Badge variant="sale">
+                  −{Math.round((1 - displayPrice / (product.compareAtCents as number)) * 100)}%
+                </Badge>
+              ) : product.featured ? (
+                <Badge variant="best">Best seller</Badge>
+              ) : null}
             </div>
-            {images.length > 1 && (
-              <div className="mt-3 flex gap-3">
-                {images.map((img, i) => (
-                  <button
-                    key={img + i}
-                    type="button"
-                    onClick={() => setActiveImage(i)}
-                    className={cn(
-                      "h-20 w-20 overflow-hidden rounded-xl border-2 transition",
-                      i === activeImage ? "border-primary" : "border-transparent opacity-70 hover:opacity-100",
-                    )}
-                    aria-label={`View image ${i + 1}`}
-                  >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* ── Buy box ───────────────────────────────────────────────── */}
+          {/* ── Buy box ──────────────────────────────────────────────────────── */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Chip tone="teal">{product.category}</Chip>
-              {product.tags.map((t) => (
+              {product.tags.slice(0, 3).map((t) => (
                 <Chip key={t}>{t}</Chip>
               ))}
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl">{product.name}</h1>
+            <h1 className="mt-4 text-[30px] font-medium leading-[1.15] sm:text-[38px]">
+              {product.name}
+            </h1>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Stars rating={rating || 4.7} size={16} showValue count={reviews.length} />
               {reviews.length > 0 && (
-                <a href="#reviews" className="text-sm font-semibold text-primary hover:underline">
+                <a href="#reviews" className="text-[13.5px] font-semibold text-teal hover:text-coral">
                   Read {reviews.length} review{reviews.length === 1 ? "" : "s"}
                 </a>
               )}
@@ -203,23 +223,23 @@ export default function ProductDetail() {
 
             <div className="mt-5">
               <PriceTag priceCents={displayPrice} compareAtCents={product.compareAtCents} size="lg" />
-              <p className="mt-1 text-xs text-muted-foreground">Price in USD, tax shown at checkout.</p>
+              <p className="mt-1 text-[12.5px] text-gray">
+                Price in USD. Tax, where applicable, is shown at checkout.
+              </p>
             </div>
 
-            <p className="mt-5 text-[15px] leading-relaxed text-muted-foreground">{product.description}</p>
+            <p className="mt-5 text-[15px] leading-relaxed text-gray">{product.description}</p>
 
             {/* Variant picker */}
             {product.variants.length > 0 && (
               <div className="mt-6">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-bold">
+                  <span className="field-label !mb-0">
                     {product.variants.length > 1 ? "Choose an option" : "Option"}
                   </span>
-                  {selected && (
-                    <span className="text-xs text-muted-foreground">SKU {selected.sku}</span>
-                  )}
+                  {selected && <span className="text-[12px] text-gray">SKU {selected.sku}</span>}
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2.5">
                   {product.variants.map((v) => {
                     const out = v.inventoryQty <= 0 || !v.active;
                     return (
@@ -229,15 +249,15 @@ export default function ProductDetail() {
                         disabled={out}
                         onClick={() => setVariantId(v.id)}
                         className={cn(
-                          "rounded-xl border-2 px-4 py-2.5 text-left text-sm font-semibold transition",
+                          "rounded-[10px] border px-4 py-2.5 text-left text-[13.5px] transition-all",
                           v.id === variantId
-                            ? "border-primary bg-secondary"
-                            : "border-border bg-card hover:border-primary/40",
+                            ? "border-teal bg-teal-soft text-teal-deep"
+                            : "border-line bg-white hover:border-teal/50",
                           out && "cursor-not-allowed opacity-45 line-through",
                         )}
                       >
-                        <span className="block">{v.name}</span>
-                        <span className="block text-xs font-normal text-muted-foreground">
+                        <span className="block font-semibold">{v.name}</span>
+                        <span className="block text-[12px] text-gray">
                           {formatMoney(v.priceCents)}
                           {out ? " · sold out" : ""}
                         </span>
@@ -248,24 +268,24 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Quantity + add */}
+            {/* Quantity + add to cart */}
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <div className="inline-flex h-12 items-center rounded-full border border-input bg-card">
+              <div className="inline-flex h-12 items-center overflow-hidden rounded-[10px] border border-line bg-white">
                 <button
                   type="button"
                   onClick={() => setQty((n) => Math.max(1, n - 1))}
-                  className="inline-flex h-12 w-11 items-center justify-center rounded-l-full hover:bg-secondary"
+                  className="inline-flex h-12 w-11 items-center justify-center transition-colors hover:bg-blush"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="w-10 text-center text-sm font-bold" aria-live="polite">
+                <span className="w-10 text-center text-sm font-semibold" aria-live="polite">
                   {qty}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQty((n) => Math.min(Math.max(stock, 1), n + 1))}
-                  className="inline-flex h-12 w-11 items-center justify-center rounded-r-full hover:bg-secondary"
+                  className="inline-flex h-12 w-11 items-center justify-center transition-colors hover:bg-blush"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-4 w-4" />
@@ -283,27 +303,30 @@ export default function ProductDetail() {
               </CtaLink>
             </div>
 
-            <p className="mt-3 text-sm font-semibold">
+            <p className="mt-3 text-[13.5px] font-semibold">
               {stock > 0 ? (
                 stock <= 5 ? (
-                  <span className="text-amber-700">Only {stock} left in stock — ships today</span>
+                  <span className="text-amber-700">Only {stock} left — ships today</span>
                 ) : (
-                  <span className="text-emerald-700">In stock — ships within 1 business day</span>
+                  <span className="text-teal-deep">In stock — ships within 1 business day</span>
                 )
               ) : (
-                <span className="text-rose-700">Currently sold out</span>
+                <span className="text-coral-deep">Currently sold out</span>
               )}
             </p>
 
             {/* Trust points */}
-            <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+            <ul className="mt-6 grid gap-2.5 sm:grid-cols-3">
               {[
-                { icon: Truck, label: "Free US shipping over $49" },
-                { icon: RotateCcw, label: "30-day returns" },
+                { icon: Truck, label: `Free US shipping over $${freeShip}` },
+                { icon: RotateCcw, label: `${s.return_window_days}-day returns` },
                 { icon: ShieldCheck, label: "Secure card checkout" },
               ].map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-2 rounded-xl bg-secondary/60 px-3 py-2.5 text-xs font-semibold">
-                  <Icon className="h-4 w-4 shrink-0 text-primary" /> {label}
+                <li
+                  key={label}
+                  className="flex items-center gap-2 rounded-[10px] bg-teal-soft/70 px-3 py-2.5 text-[11.5px] font-semibold text-teal-deep"
+                >
+                  <Icon className="h-4 w-4 shrink-0" /> {label}
                 </li>
               ))}
             </ul>
@@ -311,23 +334,27 @@ export default function ProductDetail() {
         </div>
       </Section>
 
-      {/* ── Reviews ──────────────────────────────────────────────────────── */}
-      <Section muted className="!pt-4">
-        <div id="reviews" className="scroll-mt-24">
+      {/* ── Reviews ─────────────────────────────────────────────────────────── */}
+      <Section muted className="!pt-12">
+        <div id="reviews" className="scroll-mt-32">
           <SectionHeading
             eyebrow="Reviews"
-            title={reviews.length > 0 ? `${reviews.length} customer review${reviews.length === 1 ? "" : "s"}` : "No reviews yet"}
+            title={
+              reviews.length > 0
+                ? `${reviews.length} customer review${reviews.length === 1 ? "" : "s"}`
+                : "No reviews yet"
+            }
             subtitle={
               reviews.length > 0
                 ? `Rated ${rating.toFixed(1)} out of 5 by verified PetParcel customers.`
-                : "Be the first to review this product after your order arrives."
+                : "We only publish reviews from real orders — be the first once yours arrives."
             }
           />
 
           {reviews.length === 0 ? (
             <EmptyState
               title="Nothing here yet"
-              body="We only publish reviews from real orders, so this space stays empty until a customer weighs in."
+              body="This space stays empty until a customer who bought it weighs in. You can be the first."
               action={
                 <CtaLink to="/shop" variant="outline">
                   Keep browsing
@@ -339,17 +366,21 @@ export default function ProductDetail() {
               {reviews.map((r) => (
                 <figure key={r.id} className="card-soft flex h-full flex-col p-6">
                   <Stars rating={r.rating} size={15} />
-                  {r.title && <p className="mt-3 text-sm font-bold">{r.title}</p>}
-                  <blockquote className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  {r.title && <p className="mt-3 text-[14.5px] font-semibold">{r.title}</p>}
+                  <blockquote className="mt-2 flex-1 text-sm leading-relaxed text-gray">
                     “{r.body}”
                   </blockquote>
                   <figcaption className="mt-4 flex items-center gap-2 text-xs font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-soft text-teal-deep">
                       {r.authorName.charAt(0)}
                     </span>
                     <span>{r.authorName}</span>
-                    {r.verified && <Chip tone="green"><Check className="h-3 w-3" /> Verified</Chip>}
-                    <span className="ml-auto font-normal text-muted-foreground">{formatDate(r.createdAt)}</span>
+                    {r.verified && (
+                      <Chip tone="green">
+                        <Check className="h-3 w-3" /> Verified
+                      </Chip>
+                    )}
+                    <span className="ml-auto font-normal text-gray">{formatDate(r.createdAt)}</span>
                   </figcaption>
                 </figure>
               ))}
@@ -358,23 +389,16 @@ export default function ProductDetail() {
         </div>
       </Section>
 
-      {/* ── Related ──────────────────────────────────────────────────────── */}
+      {/* ── Related ─────────────────────────────────────────────────────────── */}
       {related.length > 0 && (
         <Section>
           <SectionHeading
             eyebrow="You might also like"
-            title={`More ${product.category.toLowerCase()} favorites`}
-            action={
-              <CtaLink to={`/shop?category=${encodeURIComponent(product.category)}`} variant="outline" size="sm">
-                All {product.category} <ArrowRight className="h-4 w-4" />
-              </CtaLink>
-            }
+            title={`More ${product.category.toLowerCase()} favourites`}
+            actionTo={`/shop?category=${encodeURIComponent(product.category)}`}
+            actionLabel={`All ${product.category}`}
           />
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-            {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={related} />
         </Section>
       )}
     </>

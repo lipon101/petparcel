@@ -40,7 +40,7 @@ export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset",
+        "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
         ORDER_STATUS_CLASS[status] ?? "bg-slate-100 text-slate-700 ring-slate-200",
       )}
     >
@@ -61,7 +61,7 @@ function AccountNav() {
         <Link
           key={to}
           to={to}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
         >
           <Icon className="h-4 w-4" /> {label}
         </Link>
@@ -76,11 +76,11 @@ function OrderRow({ order }: { order: StoreOrder }) {
       to={`/order/${order.orderNumber}`}
       className="card-soft flex flex-wrap items-center gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-secondary text-primary">
         <Package className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-mono text-sm font-bold">{order.orderNumber}</span>
+        <span className="block font-mono text-sm font-semibold">{order.orderNumber}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
           {formatDate(order.createdAt)} · {formatMoney(order.totalCents)}
         </span>
@@ -117,15 +117,15 @@ export function Account() {
           { label: "Saved addresses", value: "—" },
         ].map((s) => (
           <div key={s.label} className="card-soft p-5">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{s.label}</p>
-            <p className="mt-1.5 text-2xl font-extrabold">{s.value}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
+            <p className="mt-1.5 text-2xl font-medium">{s.value}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-8">
         <div className="flex items-end justify-between">
-          <h2 className="text-lg font-extrabold">Recent orders</h2>
+          <h2 className="text-lg font-medium">Recent orders</h2>
           <Link to="/account/orders" className="text-sm font-semibold text-primary hover:underline">
             View all
           </Link>
@@ -149,22 +149,22 @@ export function Account() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Link to="/account/addresses" className="card-soft flex items-center gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary">
+          <span className="flex h-11 w-11 items-center justify-center rounded-sm bg-secondary text-primary">
             <MapPin className="h-5 w-5" />
           </span>
           <span>
-            <span className="block text-sm font-bold">Manage addresses</span>
+            <span className="block text-sm font-semibold">Manage addresses</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
               Save addresses to speed up checkout
             </span>
           </span>
         </Link>
         <Link to="/track" className="card-soft flex items-center gap-4 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary">
+          <span className="flex h-11 w-11 items-center justify-center rounded-sm bg-secondary text-primary">
             <Package className="h-5 w-5" />
           </span>
           <span>
-            <span className="block text-sm font-bold">Track a guest order</span>
+            <span className="block text-sm font-semibold">Track a guest order</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
               Look up an order by number and email
             </span>
@@ -193,7 +193,11 @@ export function AccountOrders() {
       {isLoading ? (
         <LoadingState rows={4} />
       ) : isError ? (
-        <ErrorState title="We couldn't load your orders" onRetry={() => refetch()} />
+        <ErrorState
+          title="We couldn't load your orders"
+          body="A quick retry usually sorts this out. If it keeps happening, contact support and we'll look it up for you."
+          onRetry={() => refetch()}
+        />
       ) : list.length === 0 ? (
         <EmptyState
           icon={<Package className="h-6 w-6" />}
@@ -238,7 +242,7 @@ const emptyDraft: AddressDraft = {
 };
 
 const field =
-  "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export function AccountAddresses() {
   const utils = trpc.useUtils();
@@ -344,14 +348,14 @@ export function AccountAddresses() {
 
           {list.map((a) => (
             <div key={a.id} className="card-soft flex flex-wrap items-start gap-4 p-5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-secondary text-primary">
                 <MapPin className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                   {a.label || "Address"}
                   {a.isDefaultShipping && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                       <Star className="h-3 w-3" /> Default
                     </span>
                   )}
@@ -412,7 +416,7 @@ export function AccountAddresses() {
 
           {draft ? (
             <div className="card-soft p-6">
-              <h2 className="text-lg font-extrabold">{editingId ? "Edit address" : "Add an address"}</h2>
+              <h2 className="text-lg font-medium">{editingId ? "Edit address" : "Add an address"}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold" htmlFor="addr-label">
@@ -600,7 +604,7 @@ export function AccountShell({
                 <UserIcon className="h-5 w-5" />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">
+                <span className="block truncate text-sm font-semibold">
                   {user?.email?.split("@")[0] ?? "Account"}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">{user?.email}</span>

@@ -62,7 +62,7 @@ export default function Cart() {
               <div key={`${l.slug}-${l.variantId ?? "base"}`} className="card-soft flex gap-4 p-4">
                 <Link
                   to={`/product/${l.slug}`}
-                  className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted"
+                  className="h-24 w-24 shrink-0 overflow-hidden rounded-sm bg-muted"
                 >
                   {l.image ? (
                     <img src={l.image} alt={l.name} className="h-full w-full object-cover" />
@@ -97,11 +97,11 @@ export default function Cart() {
                   </div>
 
                   <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="inline-flex h-10 items-center rounded-full border border-input">
+                    <div className="inline-flex h-10 items-center rounded-sm border border-input">
                       <button
                         type="button"
                         onClick={() => setQty(l.slug, l.variantId, l.qty - 1)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-l-full hover:bg-secondary"
+                        className="inline-flex h-10 w-10 items-center justify-center hover:bg-muted"
                         aria-label="Decrease quantity"
                       >
                         <Minus className="h-3.5 w-3.5" />
@@ -111,7 +111,7 @@ export default function Cart() {
                         type="button"
                         onClick={() => setQty(l.slug, l.variantId, l.qty + 1)}
                         disabled={l.qty >= (l.maxQty || 99)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-r-full hover:bg-secondary disabled:opacity-40"
+                        className="inline-flex h-10 w-10 items-center justify-center hover:bg-muted disabled:opacity-40"
                         aria-label="Increase quantity"
                       >
                         <Plus className="h-3.5 w-3.5" />

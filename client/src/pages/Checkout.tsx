@@ -35,7 +35,7 @@ const emptyAddress: AddressForm = {
 };
 
 const field =
-  "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "mt-1.5 h-11 w-full rounded-sm border border-input bg-card px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 const labelCls = "block text-sm font-semibold";
 
 function AddressFields({
@@ -271,7 +271,7 @@ export default function Checkout() {
 
           {/* Contact */}
           <div className="card-soft p-6">
-            <h2 className="text-lg font-extrabold">Contact</h2>
+            <h2 className="text-lg font-medium">Contact</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               We'll send order updates here, and you'll need it to track the order.
             </p>
@@ -302,7 +302,7 @@ export default function Checkout() {
 
           {/* Shipping */}
           <div className="card-soft p-6">
-            <h2 className="text-lg font-extrabold">Shipping address</h2>
+            <h2 className="text-lg font-medium">Shipping address</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               We currently ship to US addresses only.
             </p>
@@ -324,7 +324,7 @@ export default function Checkout() {
 
           {/* Billing */}
           <div className="card-soft p-6">
-            <h2 className="text-lg font-extrabold">Billing address</h2>
+            <h2 className="text-lg font-medium">Billing address</h2>
             <label className="mt-3 flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -343,7 +343,7 @@ export default function Checkout() {
 
           {/* Payment */}
           <div className="card-soft p-6">
-            <h2 className="text-lg font-extrabold">Payment method</h2>
+            <h2 className="text-lg font-medium">Payment method</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               Card details are entered on the gateway's own secure page — PetParcel never sees them.
             </p>
@@ -352,8 +352,8 @@ export default function Checkout() {
                 <label
                   key={p.id}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition",
-                    paymentProvider === p.id ? "border-primary bg-secondary/60" : "border-border hover:border-primary/40",
+                    "flex cursor-pointer items-start gap-3 rounded-sm border p-4 transition",
+                    paymentProvider === p.id ? "border-primary bg-secondary/60" : "border-border hover:border-primary/50",
                   )}
                 >
                   <input
@@ -387,7 +387,7 @@ export default function Checkout() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Delivery instructions, gift note…"
-                className="mt-1.5 w-full rounded-xl border border-input bg-card p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 w-full rounded-sm border border-input bg-card p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -396,12 +396,12 @@ export default function Checkout() {
         {/* ── Summary ────────────────────────────────────────────────── */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="card-soft space-y-4 p-6">
-            <h2 className="text-lg font-extrabold">Order summary</h2>
+            <h2 className="text-lg font-medium">Order summary</h2>
 
             <ul className="space-y-3">
               {lines.map((l) => (
                 <li key={`${l.slug}-${l.variantId ?? "base"}`} className="flex gap-3">
-                  <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <span className="h-14 w-14 shrink-0 overflow-hidden rounded-sm bg-muted">
                     {l.image ? (
                       <img src={l.image} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -446,7 +446,7 @@ export default function Checkout() {
             <button
               type="submit"
               disabled={placeOrder.isPending}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              className="btn btn-primary btn-lg w-full"
             >
               <Lock className="h-4 w-4" />
               {placeOrder.isPending ? "Placing order…" : `Place order · ${formatMoney(totalCents)}`}
