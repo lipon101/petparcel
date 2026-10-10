@@ -85,10 +85,31 @@ export interface StoreOrderEvent {
   createdAt: Date | string;
 }
 
+/** One transactional-email attempt, as recorded in `email_log` and shown on the
+ *  admin order view. `skipped` is the pre-setup state (no RESEND_API_KEY),
+ *  and `error` explains a `failed` attempt. */
+export interface StoreEmailLog {
+  id: string;
+  orderId: string | null;
+  orderNumber: string | null;
+  kind: string;
+  toEmail: string;
+  fromEmail: string | null;
+  replyTo: string | null;
+  subject: string;
+  status: string;
+  error: string | null;
+  providerId: string | null;
+  providerMessageId: string | null;
+  createdAt: Date | string;
+}
+
 export interface StoreOrderDetail {
   order: StoreOrder;
   items: StoreOrderItem[];
   events: StoreOrderEvent[];
+  /** Present on the ADMIN order query; omitted from the customer-facing ones. */
+  emails?: StoreEmailLog[];
 }
 
 export interface StoreReview {

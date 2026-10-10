@@ -236,6 +236,34 @@ export const newsletterSubscribers = pgTable(
   (t) => [index("newsletter_created_idx").on(t.createdAt)],
 );
 
+/** One row per transactional email attempt, so the admin order view can show
+ *  whether the customer was actually notified (and why not, when it failed).
+ *  A missing RESEND_API_KEY records `skipped` here instead of throwing. */
+export const emailLog = pgTable(
+  "email_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "cascade" }),
+    orderNumber: text("order_number"),
+    /** 'order_confirmation' | 'shipping_notification' */
+    kind: text("kind").notNull(),
+    toEmail: text("to_email").notNull(),
+    fromEmail: text("from_email"),
+    replyTo: text("reply_to"),
+    subject: text("subject").notNull(),
+    /** 'sent' | 'skipped' | 'failed' */
+    status: text("status").notNull().default("queued"),
+    error: text("error"),
+    providerId: text("provider_id"),
+    providerMessageId: text("provider_message_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("email_log_order_idx").on(t.orderId),
+    index("email_log_created_idx").on(t.createdAt),
+  ],
+);
+
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -244,3 +272,4 @@ export type OrderEvent = typeof orderEvents.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Address = typeof addresses.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type EmailLog = typeof emailLog.$inferSelect;

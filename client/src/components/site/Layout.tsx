@@ -29,6 +29,8 @@ import {
   RotateCcw,
   ShieldCheck,
   PawPrint,
+  Dog,
+  Cat,
   LogOut,
   User,
   Search,
@@ -91,6 +93,17 @@ export function SocialIcon({ name, className }: { name: string; className?: stri
 }
 
 const SOCIAL_LINKS = ["Facebook", "Instagram", "TikTok", "YouTube"] as const;
+
+/** The PetParcel mark: a dog and a cat sharing one rounded tile — the two
+ *  animals the store is built around, drawn in the brand navy. */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <span className={cn("brand-mark", className)} aria-hidden="true">
+      <Dog className="h-[17px] w-[17px]" strokeWidth={1.9} />
+      <Cat className="h-[17px] w-[17px]" strokeWidth={1.9} />
+    </span>
+  );
+}
 
 // ── Settings context ────────────────────────────────────────────────────────
 // Brand name, shipping rates and contact details come from the DB so the admin
@@ -359,10 +372,10 @@ function SearchField({
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="">Select category</option>
+            <option value="">SELECT CATEGORY</option>
             {categories.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {c.toUpperCase()}
               </option>
             ))}
           </select>
@@ -387,6 +400,7 @@ function Header() {
   const { data: categories } = trpc.catalog.categories.useQuery(undefined, { staleTime: 60_000 });
   const { user, logout } = useAuth();
   const catRef = useRef<HTMLDivElement | null>(null);
+  const supportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -401,15 +415,30 @@ function Header() {
     };
   }, [drawerOpen]);
 
-  // Any click outside the Browse Categories dropdown closes it.
+  // Any click outside a header dropdown closes it; Escape closes whichever is
+  // open. Both panels share one effect so their document listeners can never
+  // fight over the same event.
   useEffect(() => {
-    if (!catOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+    if (!catOpen && !supportOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (catOpen && catRef.current && !catRef.current.contains(target)) setCatOpen(false);
+      if (supportOpen && supportRef.current && !supportRef.current.contains(target))
+        setSupportOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [catOpen]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCatOpen(false);
+        setSupportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [catOpen, supportOpen]);
 
   const cats = sortCategories(categories ?? []);
   const on = (to: string) => (to === "/" ? location === "/" : location.startsWith(to));
@@ -465,9 +494,7 @@ function Header() {
           </button>
 
           <Link to="/" className="brand" onClick={scrollToTop} aria-label={brand_name}>
-            <span className="brand-mark">
-              <PawPrint className="h-6 w-6" />
-            </span>
+            <BrandMark />
             <span className="brand-text">
               <span className="brand-name">{brand_name}</span>
               <span className="brand-sub">Pet supplies</span>
@@ -477,19 +504,27 @@ function Header() {
           <SearchField className="hidden md:flex" withCategory categories={cats} />
 
           <div className="hd-actions">
-            <div className="relative hidden lg:block">
+            <div className="relative hidden lg:flex" ref={supportRef}>
               <button
                 type="button"
                 className="hd-action"
-                onClick={() => setSupportOpen((v) => !v)}
+                onClick={() => {
+                  setSupportOpen((v) => !v);
+                  setCatOpen(false);
+                }}
                 aria-expanded={supportOpen}
+                aria-haspopup="menu"
               >
-                <Phone className="h-[19px] w-[19px]" />
+                {/* The caret is pinned to the icon, not stacked under the label —
+                    that third row was what pushed Support off the row baseline. */}
+                <span className="hd-action-ic">
+                  <Phone className="h-[21px] w-[21px]" />
+                  <ChevronDown className="hd-action-caret" aria-hidden="true" />
+                </span>
                 <span className="hd-action-label">Support</span>
-                <ChevronDown className="hidden h-3 w-3 md:block" />
               </button>
               {supportOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-line bg-white p-4 shadow-[var(--shadow-lg)]">
+                <div className="hd-dropdown absolute right-0 top-full mt-2 w-64 rounded-xl border border-line bg-white p-4 shadow-[var(--shadow-lg)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray">
                     Customer care
                   </p>
@@ -531,7 +566,7 @@ function Header() {
                 className="hd-action hidden lg:inline-flex"
                 aria-label="Sign out"
               >
-                <LogOut className="h-[19px] w-[19px]" />
+                <LogOut className="h-[21px] w-[21px]" />
                 <span className="hd-action-label">Sign out</span>
               </button>
             )}
@@ -548,15 +583,19 @@ function Header() {
             <button
               type="button"
               className="hd-cats"
-              onClick={() => setCatOpen((v) => !v)}
+              onClick={() => {
+                setCatOpen((v) => !v);
+                setSupportOpen(false);
+              }}
               aria-expanded={catOpen}
+              aria-haspopup="menu"
             >
               <Menu className="h-4 w-4" />
               <span className="hidden sm:inline">Browse categories</span>
               <ChevronDown className="h-3 w-3" />
             </button>
             {catOpen && (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-xl border border-line bg-white py-1.5 shadow-[var(--shadow-lg)]">
+              <div className="hd-dropdown absolute left-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-xl border border-line bg-white py-1.5 shadow-[var(--shadow-lg)]">
                 {cats.length === 0 && (
                   <p className="px-4 py-2 text-sm text-gray">No categories yet</p>
                 )}
@@ -621,9 +660,7 @@ function Header() {
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <span className="brand">
-            <span className="brand-mark h-9 w-9">
-              <PawPrint className="h-5 w-5" />
-            </span>
+            <BrandMark className="h-9 w-9" />
             <span className="brand-text">
               <span className="brand-name text-[26px]">{brand_name}</span>
             </span>
@@ -864,9 +901,7 @@ function Footer() {
         <div className="ft-grid">
           <div>
             <Link to="/" className="brand">
-              <span className="brand-mark">
-                <PawPrint className="h-6 w-6" />
-              </span>
+              <BrandMark />
               <span className="brand-text">
                 <span className="brand-name">{s.brand_name}</span>
                 <span className="brand-sub">Pet supplies</span>
@@ -919,14 +954,13 @@ function Footer() {
 
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-gray">
               <span className="inline-flex items-center gap-1.5">
-                <Truck className="h-4 w-4 text-teal" /> Free over $
-                {(s.free_shipping_threshold_cents / 100).toFixed(0)}
+                <Truck className="h-4 w-4 text-teal" /> Fast, tracked shipping
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <RotateCcw className="h-4 w-4 text-teal" /> {s.return_window_days}-day returns
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-teal" /> Secure checkout
+                <ShieldCheck className="h-4 w-4 text-teal" /> Real support
               </span>
             </div>
           </div>
@@ -943,8 +977,8 @@ function Footer() {
               <div>
                 <p className="newsletter-title">Join the PetParcel pack</p>
                 <p className="newsletter-sub">
-                  New arrivals, restock alerts and a discount on your first order. No spam —
-                  we promise.
+                  New arrivals, restock alerts and the occasional treat. No spam —
+                  unsubscribe any time.
                 </p>
               </div>
             </div>

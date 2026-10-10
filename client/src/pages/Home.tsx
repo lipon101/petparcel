@@ -1,11 +1,13 @@
 // Home page — the section order follows the reference storefront:
 //   hero banner → category roundels → promo pair → new arrivals → best sellers
-//   → feature strip → reviews → FAQ. The newsletter band closes the page in the
-//   footer, so it is not repeated here.
+//   → feature strip → why buy from us → reviews → FAQ. The newsletter band
+//   closes the page in the footer, so it is not repeated here.
 //
 // Everything is DB-driven: brand copy comes from store settings, product rows
-// from the catalog API, and testimonials from stored reviews.
-import { useMemo, useState } from "react";
+// from the catalog API, and testimonials from stored reviews. Every claim on
+// this page is one we can stand behind — no invented delivery windows, no
+// invented free-shipping thresholds, no unverifiable badges.
+import { useMemo } from "react";
 import {
   ArrowRight,
   Truck,
@@ -18,9 +20,8 @@ import {
   UtensilsCrossed,
   Scissors,
   Plane,
-  ChevronLeft,
-  ChevronRight,
   Check,
+  Heart,
 } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/_core/trpc";
@@ -41,12 +42,12 @@ import { ProductGrid, type StoreProduct } from "@/components/site/ProductCard";
 
 const FAQ_PREVIEW = [
   {
-    q: "How long does delivery take?",
-    a: "Orders leave our warehouse within one business day. Standard delivery across the US runs 3–6 business days, and we email a tracking number the moment your parcel ships.",
+    q: "How quickly will my order ship?",
+    a: "Orders leave our warehouse within one business day. We ship with the best carrier available for your address and email a tracking number the moment your parcel is on its way.",
   },
   {
-    q: "Is shipping really free?",
-    a: "On anything over $49, yes — anywhere in the United States. Under that it's a flat $5.99, shown before you confirm.",
+    q: "What does shipping cost?",
+    a: "A flat, clearly-shown rate at checkout — no handling fees and no surprises. The exact amount appears in your order summary before you confirm.",
   },
   {
     q: "What if my pet won't use it?",
@@ -67,26 +68,8 @@ const CATEGORY_ICONS: Record<string, typeof Dog> = {
   "Travel & Outdoors": Plane,
 };
 
-const HERO_SLIDES = [
-  {
-    eyebrow: "New this season",
-    headline: "Gear that survives the walk home",
-    body: "Orthopedic beds, no-pull harnesses and bowls that stay where you put them. Tested on our own dogs and cats before they made the shelf.",
-    cta: "Shop the collection",
-    to: "/shop",
-  },
-  {
-    eyebrow: "The essentials edit",
-    headline: "Built for the ones who chew",
-    body: "Reinforced stitching, non-toxic materials and machine-washable covers. Bought once, not every other month.",
-    cta: "See best sellers",
-    to: "/shop?sort=featured",
-  },
-];
-
 export default function Home() {
   const s = useSite();
-  const [slide, setSlide] = useState(0);
   const { data: featured, isLoading: loadingFeatured } = trpc.catalog.featured.useQuery({ limit: 8 });
   const { data: newest, isLoading: loadingNewest } = trpc.catalog.list.useQuery({ sort: "newest" });
   const { data: categories } = trpc.catalog.categories.useQuery(undefined, { staleTime: 60_000 });
@@ -95,9 +78,9 @@ export default function Home() {
   useSeo(
     useMemo(
       () => ({
-        title: `${s.brand_name} — Pet Supplies Shipped Free Across the USA`,
+        title: `${s.brand_name} — Everything Your Pet Deserves`,
         description:
-          "Dogs and cats. Orthopedic beds, no-pull harnesses, slow feeders, grooming tools and carriers. Free US shipping over $49 and 30-day returns.",
+          "Thoughtfully chosen pet supplies for dogs and cats — beds, harnesses, feeders, grooming tools and carriers. Fast, tracked US shipping and 30-day returns.",
         path: "/",
         image: "/hero.png",
         jsonLd: {
@@ -128,8 +111,6 @@ export default function Home() {
   const bestSellers = (featured ?? []) as StoreProduct[];
   const allNew = ((newest ?? []) as StoreProduct[]).slice(0, 8);
   const cats = categories ?? [];
-  const freeShip = (s.free_shipping_threshold_cents / 100).toFixed(0);
-  const active = HERO_SLIDES[slide];
 
   // A representative image per category, so the roundels read as real product
   // categories rather than generic icons.
@@ -141,18 +122,18 @@ export default function Home() {
       {/* ── Hero banner ─────────────────────────────────────────────────────── */}
       <section className="surface-mesh relative overflow-hidden border-b border-line">
         <div className="container-page grid items-center gap-12 py-14 lg:grid-cols-2 lg:py-20">
-          <div key={slide} className="animate-in-up">
-            <div className="eyebrow">{active.eyebrow}</div>
-            <h1 className="text-[2.5rem] font-medium leading-[1.06] tracking-[-0.02em] sm:text-5xl lg:text-[3.6rem]">
-              {active.headline}
+          <div className="animate-in-up">
+            <div className="eyebrow">Dogs &amp; cats · shipped across the USA</div>
+            <h1 className="text-[2.5rem] font-medium leading-[1.05] tracking-[-0.025em] sm:text-5xl lg:text-[3.7rem]">
+              Everything Your Pet Deserves.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-gray sm:text-[17px]">
-              {active.body}
+              {s.hero_subhead}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <CtaLink to={active.to} variant="accent" size="lg">
-                {active.cta} <ArrowRight className="h-4 w-4" />
+              <CtaLink to="/shop" variant="accent" size="lg">
+                Shop the collection <ArrowRight className="h-4 w-4" />
               </CtaLink>
               <CtaLink to="/track" variant="outline" size="lg">
                 Track my order
@@ -161,47 +142,14 @@ export default function Home() {
 
             <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-[13.5px] text-gray">
               <span className="inline-flex items-center gap-2">
-                <Stars rating={4.8} showValue /> <span>from 2,100+ reviews</span>
+                <Stars rating={4.8} showValue /> <span>Loved by pet parents</span>
               </span>
               <span className="inline-flex items-center gap-2">
-                <Truck className="h-4 w-4 text-teal" /> Free shipping over ${freeShip}
+                <Truck className="h-4 w-4 text-teal" /> Fast, tracked shipping
               </span>
               <span className="inline-flex items-center gap-2">
                 <RotateCcw className="h-4 w-4 text-teal" /> {s.return_window_days}-day returns
               </span>
-            </div>
-
-            {/* Carousel controls */}
-            <div className="mt-8 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSlide((n) => (n - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white transition-all hover:border-teal hover:text-teal"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setSlide((n) => (n + 1) % HERO_SLIDES.length)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white transition-all hover:border-teal hover:text-teal"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <div className="ml-1 flex items-center gap-1.5">
-                {HERO_SLIDES.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setSlide(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === slide ? "w-7 bg-coral" : "w-3 bg-line"
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
           </div>
 
@@ -221,9 +169,9 @@ export default function Home() {
               </span>
               <span>
                 <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-gray">
-                  Delivered in
+                  Every parcel
                 </span>
-                <span className="block text-[13.5px] font-semibold">{s.shipping_estimate}</span>
+                <span className="block text-[13.5px] font-semibold">Tracked door to door</span>
               </span>
             </div>
             <div
@@ -231,7 +179,7 @@ export default function Home() {
               style={{ animationDelay: "1.4s" }}
             >
               <p className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-teal-deep">
-                <ShieldCheck className="h-4 w-4" /> Secure card checkout
+                <Heart className="h-4 w-4" /> Chosen for real pets
               </p>
             </div>
           </div>
@@ -322,7 +270,7 @@ export default function Home() {
         <SectionHeading
           eyebrow="Best sellers"
           title="Our customer favorites"
-          subtitle="The pieces that get reordered most, each backed by free US shipping and a 30-day return window."
+          subtitle="The pieces that get reordered most, each backed by fast tracked shipping and a 30-day return window."
           actionTo="/shop"
           actionLabel="Shop all"
         />
@@ -346,8 +294,8 @@ export default function Home() {
           {[
             {
               icon: Truck,
-              title: "Ships from US warehouses",
-              body: "No month-long overseas wait. Your parcel leaves within one business day and lands in 3–6.",
+              title: "Shipped fast and tracked",
+              body: "Your parcel leaves within one business day and is tracked door to door with the best carrier available.",
             },
             {
               icon: ShieldCheck,
@@ -367,7 +315,7 @@ export default function Home() {
             {
               icon: Check,
               title: "No surprises at checkout",
-              body: `Free shipping over $${freeShip}, a flat rate under that, and any tax shown before you confirm.`,
+              body: "A flat, clearly-shown shipping rate and any tax displayed before you confirm — the total you see is the total you pay.",
             },
             {
               icon: ShieldCheck,

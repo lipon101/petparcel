@@ -64,6 +64,12 @@ export const env = {
     presignUrl: process.env.APP_STORAGE_PRESIGN_URL ?? "",
     token: process.env.APP_STORAGE_TOKEN ?? "",
   },
+  // Transactional email goes out through Resend's HTTPS API (outbound HTTP,
+  // a supported capability). An empty key is a normal state, not an error —
+  // the store simply records the email as 'skipped' instead of sending.
+  email: {
+    resendApiKey: process.env.RESEND_API_KEY ?? "",
+  },
 
   /**
    * A user-supplied, PLAINTEXT configuration value set in the settings panel.

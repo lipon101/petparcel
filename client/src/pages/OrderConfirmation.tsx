@@ -18,6 +18,7 @@ import {
 import type { StoreOrderDetail } from "@/lib/types";
 import { useSite } from "@/components/site/Layout";
 import { Breadcrumbs, CtaLink, EmptyState, ErrorState, LoadingState, Section } from "@/components/site/Bits";
+import { cn } from "@/lib/utils";
 
 const LAST_ORDER_KEY = "petparcel_last_order";
 
@@ -42,6 +43,30 @@ export default function OrderConfirmation() {
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [confirmTried, setConfirmTried] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
+    status: string;
+    reason?: string | null;
+    email?: string;
+  }>({ status: "" });
+
+  // The checkout mutation records whether the confirmation email actually went
+  // (sent / skipped / failed). Reading it back here means the page tells the
+  // customer the truth instead of the usual "we've emailed you" that nobody
+  // verifies.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("petparcel_last_order_email");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { status?: string; reason?: string | null; email?: string };
+      // Only the order we just placed, so an older order's notice can't leak in.
+      const status = parsed?.status;
+      if (status) {
+        setEmailStatus({ status, reason: parsed.reason, email: parsed.email });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [orderNumber]);
 
   // Guests who just checked out have their email remembered locally.
   useEffect(() => {
@@ -190,7 +215,7 @@ export default function OrderConfirmation() {
               <h1 className="mt-2 text-2xl font-medium sm:text-3xl">Thanks — your order is in.</h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">
                 {paid
-                  ? `We're preparing your parcel. Delivery estimate: ${s.shipping_estimate}.`
+                  ? "We're preparing your parcel — you'll get a tracking number as soon as it ships."
                   : "We've reserved your items. Your order ships as soon as the payment clears."}
               </p>
             </div>
@@ -211,6 +236,44 @@ export default function OrderConfirmation() {
             </div>
           </div>
         </div>
+
+        {/* Email notice — table status rather than a claim we can't back up. */}
+        {(emailStatus.status === "sent" || emailStatus.status === "skipped" || emailStatus.status === "failed") && (
+          <div className="border-b border-border px-6 py-4 sm:px-8">
+            <p
+              className={cn(
+                "rounded-xl p-3 text-xs font-semibold",
+                emailStatus.status === "sent"
+                  ? "bg-emerald-50 text-emerald-800"
+                  : emailStatus.status === "skipped"
+                    ? "bg-amber-50 text-amber-800"
+                    : "bg-destructive/5 text-destructive",
+              )}
+            >
+              {emailStatus.status === "sent" ? (
+                <>📧 A confirmation email is on its way to {order.email}.</>
+              ) : emailStatus.status === "skipped" ? (
+                <>
+                  Email isn't switched on for this store yet, so no confirmation was sent. Your order is
+                  safe — keep your order number, or check back any time at{" "}
+                  <Link to="/track" className="underline">
+                    /track
+                  </Link>
+                  .
+                </>
+              ) : (
+                <>
+                  We couldn't send your confirmation email. Your order still went through — you can track
+                  it any time at{" "}
+                  <Link to="/track" className="underline">
+                    /track
+                  </Link>
+                  .
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Progress */}
         {order.status !== "cancelled" && order.status !== "refunded" && (

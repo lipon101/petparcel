@@ -10,10 +10,12 @@ import {
   BarChart3,
   Boxes,
   DollarSign,
+  Mail,
   MessageSquare,
   Package,
   Pencil,
   Plus,
+  RefreshCw,
   Save,
   Settings as SettingsIcon,
   ShoppingCart,
@@ -23,7 +25,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/_core/trpc";
 import { useAuth } from "@/_core/useAuth";
-import { useSeo } from "@/lib/petparcel";
+import { currentOrigin, useSeo } from "@/lib/petparcel";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABEL,
@@ -34,8 +36,9 @@ import {
   slugify,
   type OrderStatus,
 } from "@shared/store";
-import type { StoreOrder, StoreOrderDetail, StoreProduct } from "@/lib/types";
+import type { StoreEmailLog, StoreOrder, StoreOrderDetail, StoreProduct } from "@/lib/types";
 import { EmptyState, ErrorState, LoadingState, Section, SectionHeading } from "@/components/site/Bits";
+import { ImageUploader } from "@/components/site/ImageUploader";
 import { StatusBadge } from "@/pages/Account";
 import { cn } from "@/lib/utils";
 
@@ -530,6 +533,19 @@ export function AdminProductEditor() {
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [saved, setSaved] = useState(false);
 
+  // The gallery IS the product's image list. Deriving it from the same text
+  // field the URL box writes to keeps uploads and pasted URLs one array, with
+  // no second source of truth to drift out of sync.
+  const images = useMemo(
+    () =>
+      imagesText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [imagesText],
+  );
+  const setImages = (next: string[]) => setImagesText(next.join("\n"));
+
   useEffect(() => {
     if (!product) return;
     setName(product.name);
@@ -718,20 +734,11 @@ export function AdminProductEditor() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold" htmlFor="p-images">
-                Image URLs <span className="font-normal text-muted-foreground">(one per line)</span>
-              </label>
-              <textarea
-                id="p-images"
-                rows={4}
-                value={imagesText}
-                onChange={(e) => setImagesText(e.target.value)}
-                className={`${areaCls} font-mono text-xs`}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Paste any image URL — files you publish through the media tools land under{" "}
-                <code>/sites/…</code>.
+              <span className="block text-sm font-semibold">Product images</span>
+              <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
+                Upload your own photos, or paste image URLs. The first image is the main catalogue photo.
               </p>
+              <ImageUploader images={images} onChange={setImages} />
             </div>
             <div>
               <label className="block text-sm font-semibold" htmlFor="p-tags">
@@ -1046,6 +1053,7 @@ export function AdminOrderDetail() {
   });
   const paymentMutation = trpc.admin.setPaymentStatus.useMutation({ onSuccess: invalidate });
   const trackingMutation = trpc.admin.setTracking.useMutation({ onSuccess: invalidate });
+  const resendEmail = trpc.admin.resendOrderEmail.useMutation({ onSuccess: invalidate });
 
   useSeo({ title: "Admin — Order", description: "Order detail.", path: `/admin/orders/${id}`, noindex: true });
 
@@ -1076,6 +1084,7 @@ export function AdminOrderDetail() {
 
   const items = detail?.items ?? [];
   const events = detail?.events ?? [];
+  const emails: StoreEmailLog[] = detail?.emails ?? [];
 
   const fieldCls =
     "mt-1.5 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -1299,12 +1308,128 @@ export function AdminOrderDetail() {
                   id,
                   trackingNumber: trackingNumberInput || null,
                   carrier: carrierInput || null,
+                  // Saving tracking on an unshipped order IS the "shipped" event,
+                  // so the shipping notification fires from here.
+                  markShipped: true,
+                  origin: currentOrigin(),
                 })
               }
               className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-input px-5 text-sm font-semibold hover:bg-secondary disabled:opacity-60"
             >
               <Truck className="h-4 w-4" /> Save tracking
             </button>
+            {trackingMutation.data?.emailStatus && (
+              <p
+                role="status"
+                className={cn(
+                  "mt-3 rounded-xl p-3 text-xs font-semibold",
+                  trackingMutation.data.emailStatus === "sent"
+                    ? "bg-emerald-50 text-emerald-800"
+                    : trackingMutation.data.emailStatus === "skipped"
+                      ? "bg-amber-50 text-amber-800"
+                      : "bg-destructive/5 text-destructive",
+                )}
+              >
+                {trackingMutation.data.emailStatus === "sent"
+                  ? "Shipping notification sent to the customer ✓"
+                  : trackingMutation.data.emailStatus === "skipped"
+                    ? `Shipping email skipped — ${trackingMutation.data.emailReason ?? "no email key configured."}`
+                    : `Shipping email failed — ${trackingMutation.data.emailReason ?? "unknown error."}`}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 border-t border-border pt-5">
+            <h3 className="flex items-center gap-2 text-sm font-bold">
+              <Mail className="h-4 w-4 text-primary" /> Customer emails
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              The order confirmation sends automatically when an order is placed. The shipping
+              notification sends when you save a tracking number on an order that hasn't shipped yet.
+            </p>
+
+            {resendEmail.data && (
+              <p
+                role="status"
+                className={cn(
+                  "mt-3 rounded-xl p-3 text-xs font-semibold",
+                  resendEmail.data.status === "sent"
+                    ? "bg-emerald-50 text-emerald-800"
+                    : resendEmail.data.status === "skipped"
+                      ? "bg-amber-50 text-amber-800"
+                      : "bg-destructive/5 text-destructive",
+                )}
+              >
+                {resendEmail.data.status === "sent"
+                  ? `${resendEmail.data.kindLabel} sent ✓`
+                  : `Not sent — ${resendEmail.data.reason ?? "unknown reason."}`}
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={resendEmail.isPending}
+                onClick={() =>
+                  resendEmail.mutate({
+                    orderId: id,
+                    kind: "order_confirmation",
+                    origin: currentOrigin(),
+                  })
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-input px-3.5 text-xs font-semibold hover:bg-secondary disabled:opacity-60"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", resendEmail.isPending && "animate-spin")} />
+                Resend confirmation
+              </button>
+              <button
+                type="button"
+                disabled={resendEmail.isPending}
+                onClick={() =>
+                  resendEmail.mutate({
+                    orderId: id,
+                    kind: "shipping_notification",
+                    origin: currentOrigin(),
+                  })
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-input px-3.5 text-xs font-semibold hover:bg-secondary disabled:opacity-60"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Resend shipping
+              </button>
+            </div>
+
+            <ul className="mt-4 space-y-2">
+              {emails.length === 0 ? (
+                <li className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  No emails recorded for this order yet.
+                </li>
+              ) : (
+                emails.map((e) => (
+                  <li key={e.id} className="rounded-xl border border-border p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold">{e.subject}</span>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ring-inset",
+                          e.status === "sent"
+                            ? "bg-emerald-100 text-emerald-800 ring-emerald-200"
+                            : e.status === "skipped"
+                              ? "bg-amber-100 text-amber-800 ring-amber-200"
+                              : "bg-rose-100 text-rose-700 ring-rose-200",
+                        )}
+                      >
+                        {e.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      To {e.toEmail} · {formatDateTime(e.createdAt)}
+                    </p>
+                    {e.error && <p className="mt-1 text-[11px] text-destructive">{e.error}</p>}
+                  </li>
+                ))
+              )}
+            </ul>
           </div>
         </div>
       </div>
@@ -1543,6 +1668,15 @@ const SETTING_GROUPS: Array<{
     help: "2Checkout is the only payment method. Keys live in environment variables, never here — add TWOCHECKOUT_SELLER_ID and TWOCHECKOUT_SECRET_KEY to go live.",
     keys: [{ key: "payment_provider", label: "Payment method (2checkout)" }],
   },
+  {
+    title: "Email (Resend)",
+    help: "Order confirmation and shipping notification emails. Sending turns on as soon as RESEND_API_KEY is set — until then every attempt is logged as 'skipped' on the order.",
+    keys: [
+      { key: "email_from_name", label: "Sender name" },
+      { key: "email_from_address", label: "From address — must be on a domain verified in Resend" },
+      { key: "email_reply_to", label: "Reply-to address" },
+    ],
+  },
 ];
 
 export function AdminSettings() {
@@ -1592,6 +1726,9 @@ export function AdminSettings() {
       return_window_days: Number(d.return_window_days) || 0,
       payment_provider: d.payment_provider,
       currency: d.currency,
+      email_from_name: d.email_from_name,
+      email_from_address: d.email_from_address,
+      email_reply_to: d.email_reply_to,
     });
   };
 

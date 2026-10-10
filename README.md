@@ -40,12 +40,19 @@ built from scratch for the **US market** — React + tRPC + Postgres. No Shopify
 
 **Admin panel** (`/admin`, admin role only)
 - Dashboard: paid revenue, open orders, customers, reviews, low-stock list, best sellers, recent orders
-- Products: create/edit/delete, live/hidden and featured toggles, image URLs, tags
+- Products: create/edit/delete, live/hidden and featured toggles, **drag-and-drop image uploads** (with reorder, delete and previews) alongside paste-by-URL, tags
 - Variants: per-variant price and stock, auto-generated SKU
 - Orders: filter by status, update status (with activity log), payment status, carrier + tracking number
 - Customers: derived list with order count and lifetime spend
 - Inventory: inline stock editing with low-stock flags
-- Settings: brand copy, shipping/tax rates, returns window, contact details, active payment provider
+- Settings: brand copy, shipping/tax rates, returns window, contact details, payment method, and email sender name / from-address / reply-to
+
+**Transactional email** (Resend)
+- **Order confirmation** — sent automatically when an order is placed: itemised lines with quantities and prices, subtotal / shipping / total, the shipping address, and a link to the tracking page
+- **Shipping notification** — sent automatically when an admin saves a carrier + tracking number on an order that has not shipped yet: carrier, tracking number, a carrier deep link and the order number
+- Branded, mobile-friendly HTML with a plain-text fallback
+- Every attempt is recorded, and the **admin order view shows `sent` / `skipped` / `failed`** with the reason — `skipped` is the pre-setup state when `RESEND_API_KEY` is absent
+- Either email can be re-sent from the admin order view
 
 **SEO (US-targeted)**
 - Per-route `<title>`, meta description, canonical, Open Graph and Twitter cards
@@ -75,6 +82,7 @@ pnpm dev                      # client on :3000, API on :3001
 | `TWOCHECKOUT_SELLER_ID` | ✅ to go live | Your Verifone seller ID |
 | `TWOCHECKOUT_SECRET_KEY` | ✅ to go live | From your 2Checkout account |
 | `TWOCHECKOUT_MODE` | – | `test` (default) or `live` |
+| `RESEND_API_KEY` | – | Resend API key for transactional email. **Without it the store still works** — sends are recorded as `skipped` |
 
 Payment keys are **secrets** — they live in environment variables only, never in the
 database and never in the admin UI. The admin Settings page only shows the active
@@ -163,6 +171,50 @@ comparison of options for a Bangladesh-based merchant and step-by-step setup.
 
 ---
 
+## 5b. Transactional email (Resend)
+
+Order emails go out through **[Resend](https://resend.com)** behind
+`server/services/email.ts`. Two fire automatically, on the real business events:
+
+| Email | Fires when | Contains |
+|---|---|---|
+| **Order confirmation** | an order is placed (`checkout.place`) | itemised lines with qty + prices, subtotal / shipping / total, shipping address, a link to the tracking page |
+| **Shipping notification** | an admin saves a carrier + tracking number on an order that was not already shipped (`admin.setTracking`) | carrier, tracking number, a carrier deep link, the order number |
+
+Both are branded HTML (teal/coral, single column, mobile-friendly) with a plain-text
+alternative, and both escape customer-supplied text before it reaches the markup.
+
+### Turning it on — step by step
+
+1. **Create a Resend account** at [resend.com](https://resend.com) (the free tier sends
+   3,000 emails/month, 100/day — ample for a new store).
+2. **Verify a sending domain.** *Domains → Add Domain*, enter `petparcel.store`, and add the
+   `SPF`/`DKIM` DNS records Resend shows you. Verification usually completes in minutes.
+   A domain **must** be verified before Resend will send from it.
+3. **Create an API key.** *API Keys → Create API Key*, permission *Sending access*. Copy it —
+   it is shown once.
+4. **Set the environment variable** `RESEND_API_KEY` (Vercel → *Settings → Environment
+   Variables*, or `.env` locally). Redeploy/restart so it is picked up.
+5. **Set the from-address** in the store: **admin → Settings → Email (Resend)** — sender
+   name, **From address** (must be on the domain you verified, e.g. `orders@petparcel.store`)
+   and a reply-to. Save.
+
+That is the whole setup — no code change and no redeploy for steps 5.
+
+### What happens before you add the key
+
+**Nothing crashes and nothing is misreported.** With no `RESEND_API_KEY`, every attempt is
+recorded in the `email_log` table as **`skipped`**, the checkout response carries that status
+back to the confirmation page, and the admin order view shows it. The customer sees
+"email isn't switched on yet — keep your order number, or track it at `/track`" rather than a
+false "we've emailed you". Once the key is present, sends go out and the same panel shows
+`sent` (with the Resend message id) or `failed` (with Resend's error text).
+
+Either email can be **re-sent** from the admin order view — useful after you add the key to
+catch up on orders placed while it was missing.
+
+---
+
 ## 6. Project structure
 
 ```
@@ -171,7 +223,7 @@ app/
 │   ├── index.html              # SEO head: canonical, OG, Twitter, JSON-LD
 │   ├── public/                 # hero.png, favicon, robots.txt, sitemap.xml, products/
 │   └── src/
-│       ├── components/site/    # Layout (header/footer), ProductCard, shared Bits
+│       ├── components/site/    # Layout (header/footer), ProductCard, ImageUploader, Bits
 │       ├── lib/                # cart + SEO hooks, view types
 │       ├── pages/              # Home, Shop, ProductDetail, Cart, Checkout, Track,
 │       │                       # Account, Admin, Content, Login, Register
@@ -181,8 +233,10 @@ app/
 │   ├── routers.ts              # tRPC API surface
 │   ├── seed.ts                 # demo data seeder
 │   ├── store-settings.ts       # typed settings loader
-│   └── services/payments.ts    # pluggable payment providers
-├── drizzle/schema.ts           # 12 tables + migrations
+│   └── services/
+│       ├── payments.ts         # pluggable payment providers
+│       └── email.ts            # Resend email: 2 templates + email_log
+├── drizzle/schema.ts           # 13 tables + migrations
 ├── scripts/                    # seed, sitemap, admin:create, reset-db
 └── vercel.json
 ```
@@ -191,9 +245,13 @@ app/
 
 ## 7. Notes & known boundaries
 
-- **Transactional email is not sent.** Order confirmation is shown on screen and is
-  re-fetchable any time at `/track` with the order number + email. If you want email,
-  wire a provider such as Resend into `server/services/`.
+- **Transactional email is off until you add a key.** With no `RESEND_API_KEY` the store
+  never crashes and never silently pretends: each attempt is recorded in `email_log` as
+  `skipped` and shown on the admin order view. Add the key and set a verified from-address
+  in Settings → Email to switch sending on (section 5b).
+- **Uploaded images need storage configured.** The admin uploader uses the platform's file
+  primitives, so a deployment without those env vars reports "storage isn't configured yet"
+  rather than failing silently. Pasting image URLs always works as a fallback.
 - **Payment confirmation is pull-based.** A gateway webhook receiver would need a route
   outside the tRPC mount; the pull model avoids that and is sufficient for hosted checkouts.
 - **Order identifiers use a random suffix** (e.g. `PP-M9YRQAPT`), so they are not guessable.

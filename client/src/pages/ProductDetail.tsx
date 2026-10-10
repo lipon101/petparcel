@@ -51,7 +51,6 @@ export default function ProductDetail() {
   const onSale =
     typeof product?.compareAtCents === "number" && product.compareAtCents > displayPrice;
   const rating = averageRating(reviews.map((r) => r.rating));
-  const freeShip = (s.free_shipping_threshold_cents / 100).toFixed(0);
 
   useSeo(
     useMemo(
@@ -318,9 +317,9 @@ export default function ProductDetail() {
             {/* Trust points */}
             <ul className="mt-6 grid gap-2.5 sm:grid-cols-3">
               {[
-                { icon: Truck, label: `Free US shipping over $${freeShip}` },
+                { icon: Truck, label: "Fast, tracked shipping" },
                 { icon: RotateCcw, label: `${s.return_window_days}-day returns` },
-                { icon: ShieldCheck, label: "Secure card checkout" },
+                { icon: ShieldCheck, label: "Card details handled by our provider" },
               ].map(({ icon: Icon, label }) => (
                 <li
                   key={label}

@@ -13,7 +13,65 @@ import { isUniqueViolation } from "./_core/db-errors";
 import * as q from "./db";
 import { getSettings, updateSettings } from "./store-settings";
 import { getProvider, listProviders, verifyPayment } from "./services/payments";
+import {
+  EMAIL_KIND_LABEL,
+  listEmailsForOrder,
+  listRecentEmails,
+  sendOrderConfirmation,
+  sendShippingNotification,
+  toEmailLines,
+  type EmailKind,
+} from "./services/email";
+import {
+  StorageError,
+  storageCommit,
+  storagePutUrl,
+} from "./_core/storage";
 import { ORDER_STATUSES, PAYMENT_STATUSES, slugify, sortCategories } from "../shared/store";
+
+/** Image types the platform's storage accepts. Mirrors the whitelist in
+ *  _core/storage and names the reason, so an admin uploading a PDF to a product
+ *  gallery gets a sentence rather than an opaque 500. */
+const PRODUCT_IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+]);
+
+/** Strip any path a caller could smuggle into the storage key. The uuid prefix
+ *  already makes the key unique; this keeps the readable tail honest. */
+function sanitizeBasename(name: string): string {
+  const tail = name.split(/[/\\]/).pop() ?? "upload";
+  const cleaned = tail
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[.-]+/, "")
+    .slice(-60);
+  return cleaned || "upload";
+}
+
+/** Translate a StorageError into the tRPC error an admin can act on. */
+function storageErrorToTrpc(e: unknown): never {
+  if (e instanceof StorageError) {
+    if (e.code === "not_configured") {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "File storage isn't configured on this deployment yet.",
+      });
+    }
+    if (e.code === "forbidden") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "That file name isn't allowed." });
+    }
+    if (e.code === "not_found") {
+      throw new TRPCError({ code: "NOT_FOUND", message: "The upload didn't arrive — please try again." });
+    }
+    throw new TRPCError({ code: "BAD_REQUEST", message: e.message });
+  }
+  throw e;
+}
 
 // ── shared zod fragments ─────────────────────────────────────────────────────
 const addressSchema = z.object({
@@ -232,12 +290,40 @@ const checkoutRouter = router({
           ipnUrl: `${origin}/api/payments/notify`,
         });
 
+        // Order confirmation fires HERE — on the real "order placed" event, not
+        // from a button. It cannot fail the order: the mail module records a
+        // status (sent / skipped / failed) and returns, so a missing API key
+        // leaves the customer with a placed order and the admin with a visible
+        // reason rather than a 500 at the till.
+        const settings = await getSettings();
+        const detail = await q.getOrderDetail(order.id);
+        const emailResult = detail
+          ? await sendOrderConfirmation(
+              {
+                id: detail.order.id,
+                orderNumber: detail.order.orderNumber,
+                email: detail.order.email,
+                currency: detail.order.currency,
+                subtotalCents: detail.order.subtotalCents,
+                shippingCents: detail.order.shippingCents,
+                taxCents: detail.order.taxCents,
+                totalCents: detail.order.totalCents,
+                shippingAddress: detail.order.shippingAddress,
+              },
+              toEmailLines(detail.items),
+              settings,
+              origin,
+            )
+          : { status: "failed" as const, reason: "Order detail unavailable for the email." };
+
         return {
           orderNumber: order.orderNumber,
           totalCents: order.totalCents,
           provider: provider.id,
           redirectUrl: started.redirectUrl,
           instructions: started.instructions,
+          emailStatus: emailResult.status,
+          emailReason: emailResult.reason ?? null,
         };
       } catch (e) {
         if (e instanceof q.OutOfStockError) {
@@ -464,7 +550,10 @@ const adminRouter = router({
   order: adminProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ input }) => {
     const detail = await q.getOrderDetail(input.id);
     if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
-    return detail;
+    // The email log travels with the order so the admin view can answer
+    // "was the customer actually notified?" from real rows.
+    const emails = await listEmailsForOrder(input.id);
+    return { ...detail, emails };
   }),
 
   setOrderStatus: adminProcedure
@@ -506,19 +595,59 @@ const adminRouter = router({
         trackingNumber: z.string().max(120).nullable(),
         carrier: z.string().max(60).nullable(),
         markShipped: z.boolean().optional(),
+        /** Absolute origin for the links inside the email. */
+        origin: z.string().optional(),
       }),
     )
     .mutation(async ({ input }) => {
+      // Read the state BEFORE the write: the shipping notification belongs to
+      // the transition into "shipped", so re-saving a tracking number on an
+      // order that already shipped must not email the customer a second time.
+      const before = await q.getOrderDetail(input.id);
+      const wasShipped = before?.order.status === "shipped";
+
       const detail = await q.updateOrderTracking({
         orderId: input.id,
         trackingNumber: input.trackingNumber,
         carrier: input.carrier,
       });
       if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+
+      let final = detail;
       if (input.markShipped && detail.order.status !== "shipped") {
-        return q.updateOrderStatus(input.id, "shipped", "Marked shipped.");
+        final = (await q.updateOrderStatus(input.id, "shipped", "Marked shipped.")) ?? detail;
       }
-      return detail;
+
+      // Fire the shipping notification on the real event: the order became
+      // shipped AND carries a tracking number, and it was not shipped before.
+      let emailStatus: string | null = null;
+      let emailReason: string | null = null;
+      const nowShipped = final.order.status === "shipped";
+      if (nowShipped && !wasShipped && final.order.trackingNumber) {
+        const settings = await getSettings();
+        const result = await sendShippingNotification(
+          {
+            id: final.order.id,
+            orderNumber: final.order.orderNumber,
+            email: final.order.email,
+            currency: final.order.currency,
+            subtotalCents: final.order.subtotalCents,
+            shippingCents: final.order.shippingCents,
+            taxCents: final.order.taxCents,
+            totalCents: final.order.totalCents,
+            shippingAddress: final.order.shippingAddress,
+            carrier: final.order.carrier,
+            trackingNumber: final.order.trackingNumber,
+          },
+          toEmailLines(final.items),
+          settings,
+          input.origin,
+        );
+        emailStatus = result.status;
+        emailReason = result.reason ?? null;
+      }
+
+      return { ...final, emails: await listEmailsForOrder(input.id), emailStatus, emailReason };
     }),
 
   setOrderNotes: adminProcedure
@@ -546,6 +675,95 @@ const adminRouter = router({
   // newsletter
   newsletter: adminProcedure.query(() => q.listNewsletterSubscribers()),
 
+  // ── product images (upload) ──────────────────────────────────────────────
+  /** Step 1 of the 3-step upload: hand back a signed PUT URL. The browser
+   *  uploads the bytes straight to storage; the server never sees them. */
+  uploadImage: adminProcedure
+    .input(
+      z.object({
+        filename: z.string().min(1).max(200),
+        contentType: z.string().min(1).max(120),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!PRODUCT_IMAGE_TYPES.has(input.contentType)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "That file type isn't supported. Use a PNG, JPEG, GIF, WebP or AVIF image.",
+        });
+      }
+      const key = `products/${crypto.randomUUID()}-${sanitizeBasename(input.filename)}`;
+      try {
+        const { uploadUrl, publicPath } = await storagePutUrl(key, input.contentType, {
+          ownerId: ctx.user.id,
+        });
+        return { uploadUrl, key, publicPath };
+      } catch (e) {
+        storageErrorToTrpc(e);
+      }
+    }),
+
+  /** Step 3 of the 3-step upload: index the object that just landed (step 2 is
+   *  the browser's PUT). Returns the URL to store on the product. */
+  commitImage: adminProcedure
+    .input(z.object({ key: z.string().min(1).max(400), name: z.string().min(1).max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const rec = await storageCommit(input.key, { ownerId: ctx.user.id, name: input.name });
+        // /app-storage/<key> is the app's public read path — same origin, so it
+        // works on the storefront, the admin preview and in an <img src> alike.
+        return { key: rec.key, url: `/app-storage/${rec.key}` };
+      } catch (e) {
+        storageErrorToTrpc(e);
+      }
+    }),
+
+  // ── transactional email ──────────────────────────────────────────────────
+  /** Recent send attempts across the store, for the admin email panel. */
+  emails: adminProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(200).optional() }).optional())
+    .query(({ input }) => listRecentEmails(input?.limit ?? 50)),
+
+  /** Re-send a transactional email for an order (confirmation or shipping).
+   *  Used when the first attempt was skipped for a missing key, or failed. */
+  resendOrderEmail: adminProcedure
+    .input(
+      z.object({
+        orderId: z.string().min(1),
+        kind: z.enum(["order_confirmation", "shipping_notification"]),
+        origin: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const detail = await q.getOrderDetail(input.orderId);
+      if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+      const settings = await getSettings();
+      const ctx = {
+        id: detail.order.id,
+        orderNumber: detail.order.orderNumber,
+        email: detail.order.email,
+        currency: detail.order.currency,
+        subtotalCents: detail.order.subtotalCents,
+        shippingCents: detail.order.shippingCents,
+        taxCents: detail.order.taxCents,
+        totalCents: detail.order.totalCents,
+        shippingAddress: detail.order.shippingAddress,
+        carrier: detail.order.carrier,
+        trackingNumber: detail.order.trackingNumber,
+      };
+      const lines = toEmailLines(detail.items);
+      const result =
+        input.kind === "shipping_notification"
+          ? await sendShippingNotification(ctx, lines, settings, input.origin)
+          : await sendOrderConfirmation(ctx, lines, settings, input.origin);
+      return {
+        ...result,
+        kind: input.kind as EmailKind,
+        kindLabel: EMAIL_KIND_LABEL[input.kind as EmailKind],
+        emails: await listEmailsForOrder(input.orderId),
+      };
+    }),
+
   // settings
   settings: adminProcedure.query(() => getSettings()),
   updateSettings: adminProcedure
@@ -567,6 +785,9 @@ const adminRouter = router({
         return_window_days: z.number().int().min(0).max(365).optional(),
         payment_provider: z.string().optional(),
         currency: z.string().optional(),
+        email_from_name: z.string().max(120).optional(),
+        email_from_address: z.string().max(200).optional(),
+        email_reply_to: z.string().max(200).optional(),
       }),
     )
     .mutation(({ input }) => updateSettings(input)),

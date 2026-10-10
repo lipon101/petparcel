@@ -57,6 +57,7 @@ vi.mock("./db", () => ({
   listUserOrders: vi.fn(async () => []),
   updateOrderPayment: vi.fn(async () => null),
   updateOrderStatus: vi.fn(async () => null),
+  updateOrderTracking: vi.fn(async () => null),
   OutOfStockError: class OutOfStockError extends Error {},
   // Addresses
   listAddresses: vi.fn(async () => []),
@@ -88,8 +89,40 @@ vi.mock("./db", () => ({
   setVariantInventory: vi.fn(),
 }));
 
+// Storage is mocked so these tests exercise ROUTER behaviour — the content-type
+// whitelist, admin gating, and StorageError → TRPCError mapping — rather than
+// reaching object storage or the real `files` table.
+vi.mock("./_core/storage", () => {
+  class StorageError extends Error {
+    constructor(message: string, readonly code: string) {
+      super(message);
+      this.name = "StorageError";
+    }
+  }
+  return {
+    StorageError,
+    storagePutUrl: vi.fn(async () => {
+      throw new StorageError("App storage not configured.", "not_configured");
+    }),
+    storageCommit: vi.fn(async (key: string) => ({ key })),
+  };
+});
+
+vi.mock("./services/email", () => ({
+  EMAIL_KIND_LABEL: {
+    order_confirmation: "Order confirmation",
+    shipping_notification: "Shipping notification",
+  },
+  sendOrderConfirmation: vi.fn(async () => ({ status: "skipped", reason: "RESEND_API_KEY is not set" })),
+  sendShippingNotification: vi.fn(async () => ({ status: "skipped", reason: "RESEND_API_KEY is not set" })),
+  listEmailsForOrder: vi.fn(async () => []),
+  listRecentEmails: vi.fn(async () => []),
+  toEmailLines: vi.fn((items: unknown[]) => items),
+}));
+
 const { appRouter } = await import("./routers");
-const { createOrder, listUserOrders, adminStats } = await import("./db");
+const { createOrder, listUserOrders, adminStats, updateOrderTracking, getOrderDetail } = await import("./db");
+const { sendOrderConfirmation, sendShippingNotification } = await import("./services/email");
 
 const anonymous = { c: {} as never, db: {} as never, user: null };
 const customer = { c: {} as never, db: {} as never, user: { id: "user-1", role: "user" } as never };
@@ -229,5 +262,164 @@ describe("checkout.place", () => {
     expect(createOrder).toHaveBeenCalledWith(
       expect.objectContaining({ userId: null, email: "buyer@example.com" }),
     );
+  });
+});
+
+// ── Order confirmation email ────────────────────────────────────────────────
+// The confirmation must fire on the real "order placed" event. `getOrderDetail`
+// is unmocked-value (undefined) here, which is exactly the degraded case: the
+// order still returns and the email is reported as failed rather than throwing.
+describe("checkout.place — order confirmation email", () => {
+  it("reports the email outcome on the checkout result", async () => {
+    vi.mocked(createOrder).mockResolvedValueOnce({
+      id: "order-1",
+      orderNumber: "PP-EMAIL001",
+      totalCents: 4999,
+      currency: "USD",
+      email: "buyer@example.com",
+    } as never);
+    vi.mocked(getOrderDetail).mockResolvedValueOnce({
+      order: {
+        id: "order-1",
+        orderNumber: "PP-EMAIL001",
+        email: "buyer@example.com",
+        currency: "USD",
+        subtotalCents: 4999,
+        shippingCents: 0,
+        taxCents: 0,
+        totalCents: 4999,
+        shippingAddress: { fullName: "Ada Lovelace" },
+      },
+      items: [{ nameSnapshot: "Dog Bed", variantSnapshot: null, qty: 1, priceCents: 4999, imageUrl: null }],
+      events: [],
+    } as never);
+
+    const caller = appRouter.createCaller(anonymous as never);
+    const result = await caller.checkout.place({
+      email: "buyer@example.com",
+      items: [{ slug: "dog-bed", variantId: null, qty: 1 }],
+      shippingAddress: {
+        fullName: "Ada Lovelace",
+        line1: "1 Analytical Way",
+        city: "Wilmington",
+        state: "DE",
+        postalCode: "19801",
+        country: "US",
+      },
+      origin: "https://www.petparcel.store",
+    });
+
+    expect(sendOrderConfirmation).toHaveBeenCalledTimes(1);
+    expect(result.emailStatus).toBe("skipped");
+    expect(result.emailReason).toContain("RESEND_API_KEY");
+  });
+});
+
+// ── Shipping notification email ─────────────────────────────────────────────
+describe("admin.setTracking — shipping notification", () => {
+  const shippedOrder = {
+    order: {
+      id: "order-1",
+      orderNumber: "PP-SHIP001",
+      email: "buyer@example.com",
+      status: "paid",
+      currency: "USD",
+      subtotalCents: 4999,
+      shippingCents: 0,
+      taxCents: 0,
+      totalCents: 4999,
+      shippingAddress: { fullName: "Ada Lovelace" },
+      carrier: null,
+      trackingNumber: null,
+    },
+    items: [],
+    events: [],
+  };
+
+  it("fires when an unshipped order gains a tracking number", async () => {
+    vi.mocked(getOrderDetail)
+      .mockResolvedValueOnce(shippedOrder as never) // the pre-write read
+      .mockResolvedValueOnce(shippedOrder as never); // the post-write read
+    vi.mocked(updateOrderTracking).mockResolvedValue({
+      order: {
+        ...shippedOrder.order,
+        carrier: "USPS",
+        trackingNumber: "9400111899223857182",
+        status: "shipped",
+      },
+      items: [],
+      events: [],
+    } as never);
+
+    const caller = appRouter.createCaller(admin as never);
+    const result = await caller.admin.setTracking({
+      id: "order-1",
+      trackingNumber: "9400111899223857182",
+      carrier: "USPS",
+      markShipped: true,
+      origin: "https://www.petparcel.store",
+    });
+
+    expect(sendShippingNotification).toHaveBeenCalledTimes(1);
+    expect(result.emailStatus).toBe("skipped");
+  });
+
+  it("does NOT re-email an order that had already shipped", async () => {
+    vi.mocked(sendShippingNotification).mockClear();
+    // Reset the per-call queues from the previous case so the pre-write read is
+    // deterministic, then pin the shipped state it must observe.
+    vi.mocked(getOrderDetail).mockReset();
+    vi.mocked(updateOrderTracking).mockReset();
+    const alreadyShipped = {
+      ...shippedOrder,
+      order: { ...shippedOrder.order, status: "shipped", trackingNumber: "OLD123" },
+    };
+    vi.mocked(getOrderDetail).mockResolvedValue(alreadyShipped as never);
+    vi.mocked(updateOrderTracking).mockResolvedValue(alreadyShipped as never);
+
+    const caller = appRouter.createCaller(admin as never);
+    const result = await caller.admin.setTracking({
+      id: "order-1",
+      trackingNumber: "NEW456",
+      carrier: "UPS",
+      markShipped: true,
+      origin: "https://www.petparcel.store",
+    });
+
+    expect(sendShippingNotification).not.toHaveBeenCalled();
+    expect(result.emailStatus).toBeNull();
+  });
+});
+
+// ── Product image uploads ───────────────────────────────────────────────────
+describe("admin image upload", () => {
+  it("rejects a non-image content type before touching storage", async () => {
+    const caller = appRouter.createCaller(admin as never);
+    const err = await caller.admin
+      .uploadImage({ filename: "invoice.pdf", contentType: "application/pdf" })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(TRPCError);
+    expect((err as TRPCError).code).toBe("BAD_REQUEST");
+  });
+
+  it("is admin-only", async () => {
+    const caller = appRouter.createCaller(customer as never);
+    const err = await caller.admin
+      .uploadImage({ filename: "bed.png", contentType: "image/png" })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(TRPCError);
+    expect((err as TRPCError).code).toBe("FORBIDDEN");
+  });
+
+  it("maps unconfigured storage to a message an admin can act on", async () => {
+    // Storage env vars are absent in the test runner, so the real _core module
+    // throws StorageError("not_configured") — which must NOT surface as a 500.
+    const caller = appRouter.createCaller(admin as never);
+    const err = await caller.admin
+      .uploadImage({ filename: "bed.png", contentType: "image/png" })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(TRPCError);
+    expect((err as TRPCError).code).toBe("PRECONDITION_FAILED");
+    expect((err as TRPCError).message).toContain("storage");
   });
 });

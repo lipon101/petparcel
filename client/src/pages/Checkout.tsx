@@ -173,7 +173,9 @@ export default function Checkout() {
   }, [providers, s.payment_provider, paymentProvider]);
 
   const shippingCents =
-    subtotalCents >= s.free_shipping_threshold_cents ? 0 : s.shipping_flat_cents;
+    s.free_shipping_threshold_cents > 0 && subtotalCents >= s.free_shipping_threshold_cents
+      ? 0
+      : s.shipping_flat_cents;
   const taxCents = Math.round((subtotalCents * s.tax_rate_bps) / 10000);
   const totalCents = subtotalCents + shippingCents + taxCents;
 
@@ -190,6 +192,17 @@ export default function Checkout() {
         window.localStorage.setItem(
           LAST_ORDER_KEY,
           JSON.stringify({ orderNumber: result.orderNumber, email }),
+        );
+        // Carry the email outcome onto the confirmation page so it can tell the
+        // customer whether a confirmation actually went — and, when it didn't,
+        // that their order is still safe.
+        window.localStorage.setItem(
+          "petparcel_last_order_email",
+          JSON.stringify({
+            status: result.emailStatus,
+            reason: result.emailReason,
+            email,
+          }),
         );
       } catch {
         /* storage unavailable — the confirmation page will ask for the email */
@@ -258,7 +271,7 @@ export default function Checkout() {
       <SectionHeading
         eyebrow="Checkout"
         title="Complete your order"
-        subtitle={`Secure checkout. ${s.shipping_estimate} delivery, free over $${(s.free_shipping_threshold_cents / 100).toFixed(0)}.`}
+        subtitle="Fast, tracked shipping and a 30-day return window on everything."
       />
 
       <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
@@ -460,10 +473,10 @@ export default function Checkout() {
 
             <ul className="space-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
               <li className="flex items-center gap-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> 256-bit encrypted checkout
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Card details handled by our payment provider
               </li>
               <li className="flex items-center gap-2">
-                <Truck className="h-3.5 w-3.5 text-primary" /> Ships in {s.shipping_estimate}
+                <Truck className="h-3.5 w-3.5 text-primary" /> Fast, tracked shipping
               </li>
             </ul>
           </div>

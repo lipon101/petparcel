@@ -14,12 +14,12 @@ export default function Cart() {
 
   useSeo({
     title: "Your Cart",
-    description: "Review your PetParcel cart and check out securely. Free US shipping over $49.",
+    description: "Review your PetParcel cart and check out. Fast, tracked US shipping and 30-day returns.",
     path: "/cart",
     noindex: true,
   });
 
-  const freeShip = subtotalCents >= s.free_shipping_threshold_cents;
+  const freeShip = s.free_shipping_threshold_cents > 0 && subtotalCents >= s.free_shipping_threshold_cents;
   const shippingCents = freeShip ? 0 : s.shipping_flat_cents;
   const taxCents = Math.round((subtotalCents * s.tax_rate_bps) / 10000);
   const totalCents = subtotalCents + shippingCents + taxCents;
@@ -37,7 +37,7 @@ export default function Cart() {
         <EmptyState
           icon={<ShoppingBag className="h-6 w-6" />}
           title="Your cart is empty"
-          body="Nothing here yet. Browse the catalog and add something your pet will actually use — free US shipping kicks in over $49."
+          body="Nothing here yet. Browse the catalog and add something your pet will actually use — every order ships fast and tracked."
           action={
             <CtaLink to="/shop">
               Start shopping
@@ -167,12 +167,12 @@ export default function Cart() {
               </CtaLink>
 
               <p className="text-center text-xs text-muted-foreground">
-                Secure checkout · card details never touch our servers
+                Card details are handled by our payment provider — never by us
               </p>
             </div>
 
             <ul className="mt-4 space-y-2 text-xs text-muted-foreground">
-              <li>• Ships from US warehouses in {s.shipping_estimate}.</li>
+              <li>• Fast, tracked shipping on every order.</li>
               <li>• {s.return_window_days}-day returns on everything.</li>
               <li>• Need help? {s.contact_email}</li>
             </ul>

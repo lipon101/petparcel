@@ -79,26 +79,38 @@ export interface SettingsMap {
   return_window_days: number;
   payment_provider: string;
   currency: string;
+  email_from_name: string;
+  email_from_address: string;
+  email_reply_to: string;
 }
 
 export const SETTINGS_DEFAULTS: SettingsMap = {
   brand_name: "PetParcel",
-  tagline: "Good gear for the ones who wait by the door.",
-  announcement: "Free US shipping over $49 · 30-day returns · Ships in 1 business day",
-  hero_headline: "Everything they'd pick themselves",
+  tagline: "Everything Your Pet Deserves.",
+  // Honest, no-timeframe messaging: we ship fast with the best carrier available
+  // and never promise a delivery window we can't guarantee.
+  announcement: "Fast, tracked US shipping · 30-day returns · Real support",
+  hero_headline: "Everything Your Pet Deserves.",
   hero_subhead:
-    "Beds, harnesses, bowls and toys we've tried on our own dogs and cats. Free US shipping over $49, and 30 days to change your mind.",
-  contact_email: "support@petparcel.store",
+    "Thoughtfully chosen beds, harnesses, feeders and toys for dogs and cats — the gear we'd put in our own homes. Shipped fast and tracked, with 30 days to change your mind.",
+  contact_email: "hello@petparcel.store",
   contact_phone: "+1 (800) 555-0142",
   support_hours: "Mon–Fri, 9am–6pm EST",
   business_address: "PetParcel LLC, 1200 Market St, Wilmington, DE 19801, USA",
   shipping_flat_cents: 599,
-  free_shipping_threshold_cents: 4900,
+  // 0 = no free-shipping tier. We don't advertise a threshold we'd have to
+  // invent; shipping is a flat, clearly-shown rate. Set a value here to
+  // re-enable a free-shipping threshold from the admin panel.
+  free_shipping_threshold_cents: 0,
   tax_rate_bps: 0,
-  shipping_estimate: "3–6 business days",
+  shipping_estimate: "Fast, tracked delivery",
   return_window_days: 30,
   payment_provider: "2checkout",
   currency: "USD",
+  email_from_name: "PetParcel",
+  // Must be an address on a domain verified in Resend, or Resend refuses the send.
+  email_from_address: "orders@petparcel.store",
+  email_reply_to: "hello@petparcel.store",
 };
 
 export const SETTINGS_KEYS = Object.keys(SETTINGS_DEFAULTS) as (keyof SettingsMap)[];
@@ -122,10 +134,13 @@ export const SETTINGS_FIELDS: {
   { key: "business_address", label: "Business address", type: "textarea", group: "Contact" },
   { key: "shipping_flat_cents", label: "Flat shipping rate", hint: "Charged when the cart is below the free-shipping threshold.", type: "money", group: "Shipping & tax" },
   { key: "free_shipping_threshold_cents", label: "Free shipping over", type: "money", group: "Shipping & tax" },
-  { key: "shipping_estimate", label: "Delivery estimate", hint: "e.g. 3–6 business days", type: "text", group: "Shipping & tax" },
+  { key: "shipping_estimate", label: "Shipping message", hint: "Shown to customers. Keep it honest — avoid promising an exact delivery window.", type: "text", group: "Shipping & tax" },
   { key: "tax_rate_bps", label: "Tax rate (basis points)", hint: "0 = no tax. 825 = 8.25%.", type: "number", group: "Shipping & tax" },
   { key: "return_window_days", label: "Return window (days)", type: "number", group: "Shipping & tax" },
   { key: "currency", label: "Currency code", type: "text", group: "Shipping & tax" },
+  { key: "email_from_name", label: "Email sender name", hint: "Shown as the sender on order emails.", type: "text", group: "Email (Resend)" },
+  { key: "email_from_address", label: "Email from address", hint: "Must be on a domain you have verified in Resend, e.g. orders@petparcel.store.", type: "email", group: "Email (Resend)" },
+  { key: "email_reply_to", label: "Reply-to address", hint: "Where customer replies land.", type: "email", group: "Email (Resend)" },
 ];
 
 // ── Formatting helpers shared by client and server ───────────────────────────
@@ -214,9 +229,18 @@ export function sortCategories(list: string[]): string[] {
   });
 }
 
+// Trust strip copy. Every line here is something we can actually stand behind:
+// no invented delivery windows, no invented free-shipping thresholds, no
+// unverifiable security badges.
 export const TRUST_BADGES = [
-  { title: "Free US shipping", body: "On every order over $49, anywhere in the country." },
-  { title: "30-day returns", body: "Didn't work out? Send it back for a full refund." },
-  { title: "Secure checkout", body: "Card details are handled by our payment provider, never by us." },
-  { title: "Real support", body: "Questions answered by people in Wilmington, Delaware." },
+  {
+    title: "Fast, tracked shipping",
+    body: "We ship quickly with the best carrier available, and every parcel is tracked door to door.",
+  },
+  { title: "30-day returns", body: "Didn't work out? Send it back within 30 days for a full refund." },
+  {
+    title: "Straightforward checkout",
+    body: "Card details are handled by our payment provider — never by us.",
+  },
+  { title: "Real support", body: "Questions answered by people, not a bot." },
 ] as const;

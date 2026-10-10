@@ -63,7 +63,7 @@ export function About() {
 
           <h2 className="text-xl font-semibold text-foreground">How we treat customers</h2>
           <p>
-            Free shipping over $49, a flat $5.99 below it, and a 30-day return window on everything. If
+            A flat, clearly-shown shipping rate and a 30-day return window on everything. If
             something arrives damaged, we replace it and cover the label. Support is answered by humans in
             Wilmington, Delaware — not a chatbot.
           </p>
@@ -160,11 +160,11 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: "How long does delivery take?",
-        a: "Orders placed before 2pm EST ship the same business day; anything later goes out the next business day. Standard US delivery then takes 3–6 business days. You'll get a tracking number as soon as the label is created.",
+        a: "Orders placed before 2pm EST ship the same business day; anything later goes out the next business day. We ship with the best carrier available for your address, and you'll get a tracking number as soon as the label is created so you can follow it door to door.",
       },
       {
         q: "How much is shipping?",
-        a: "Free on every order over $49, anywhere in the United States. Below that it's a flat $5.99. There are no handling fees or surprise charges at checkout.",
+        a: "A flat, clearly-shown rate at checkout — no handling fees and no surprise charges. The exact amount appears in your order summary before you confirm.",
       },
       {
         q: "Do you ship outside the US?",
@@ -243,8 +243,8 @@ export function ShippingReturns() {
     <PolicyPage title="Shipping & returns" updated="October 2026">
       <div className="not-prose grid gap-4 sm:grid-cols-3">
         {[
-          { icon: Truck, title: "Free over $49", body: "Flat $5.99 below that" },
-          { icon: Clock, title: s.shipping_estimate, body: "US-wide standard delivery" },
+          { icon: Truck, title: "Fast, tracked shipping", body: "Every parcel tracked door to door" },
+          { icon: Clock, title: "Ships in 1 business day", body: "Dispatched from our US warehouse" },
           { icon: RotateCcw, title: `${s.return_window_days}-day returns`, body: "No restocking fee" },
         ].map(({ icon: Icon, title, body }) => (
           <div key={title} className="card-soft flex items-start gap-3 p-4">
@@ -261,17 +261,14 @@ export function ShippingReturns() {
 
       <h2>Shipping</h2>
       <p>
-        We ship to all 50 US states from our US warehouses. Orders placed before 2pm EST on a business day are
-        dispatched the same day; anything later goes out the next business day. Standard delivery arrives in{" "}
-        {s.shipping_estimate}.
+        We ship to all 50 US states from our US warehouse. Orders placed before 2pm EST on a business day are
+        dispatched the same day; anything later goes out the next business day. We ship with the best carrier
+        available for your address, and every parcel is tracked door to door.
       </p>
       <ul>
         <li>
-          <strong>Free standard shipping</strong> on orders over $
-          {(s.free_shipping_threshold_cents / 100).toFixed(0)}.
-        </li>
-        <li>
-          <strong>Flat ${(s.shipping_flat_cents / 100).toFixed(2)}</strong> on orders below that threshold.
+          <strong>Flat ${(s.shipping_flat_cents / 100).toFixed(2)} shipping</strong> on every order — no
+          handling fees, no surprise charges.
         </li>
         <li>Tracking is emailed the moment your label is created, and appears on your order page.</li>
         <li>We don't currently ship to PO boxes outside the continental US, or internationally.</li>
@@ -643,13 +640,13 @@ export function NotFound() {
         </div>
         <ul className="mt-10 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-semibold text-muted-foreground">
           <li className="inline-flex items-center gap-1.5">
-            <Truck className="h-4 w-4 text-primary" /> Free US shipping over $49
+            <Truck className="h-4 w-4 text-primary" /> Fast, tracked shipping
           </li>
           <li className="inline-flex items-center gap-1.5">
             <RotateCcw className="h-4 w-4 text-primary" /> 30-day returns
           </li>
           <li className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-primary" /> Secure checkout
+            <ShieldCheck className="h-4 w-4 text-primary" /> Real support
           </li>
         </ul>
       </div>
