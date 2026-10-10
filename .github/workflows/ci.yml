@@ -1,0 +1,63 @@
+name: CI
+
+# Runs on every push (any branch) and on every pull request targeting `main`.
+# The `typecheck-and-test` job is the required status check configured by the
+# branch-protection rule on `main` — keep the job `name` stable, because that
+# string is what the protection rule matches on ("CI / typecheck-and-test").
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+# A newer push to the same ref supersedes an in-flight run on it.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-test:
+    name: typecheck-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # `vitest.setup.ts` (and `vite.config.ts`'s `test.env`) bind DATABASE_URL and
+    # JWT_SECRET at import time, because `server/_core/env.ts` validates the
+    # environment when the modules under test are loaded. Every data call in the
+    # suite is mocked, so nothing ever opens a socket — these are shape-valid
+    # placeholders that satisfy that import-time validation, NOT a live database.
+    # That is why no `services:` container is needed and CI stays hermetic.
+    # If a future test needs a real Postgres, add a `services: postgres:` block
+    # here and point DATABASE_URL at it.
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Installed before setup-node so its `cache: pnpm` can find pnpm on PATH.
+      # The version is pinned to match package.json's `packageManager` field.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
