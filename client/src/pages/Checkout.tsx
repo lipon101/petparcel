@@ -136,8 +136,8 @@ export default function Checkout() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   useSeo({
-    title: "Secure Checkout",
-    description: "Complete your PetParcel order — secure card checkout, free US shipping over $49.",
+    title: "Checkout",
+    description: "Complete your PetParcel order — fast, tracked US shipping and 30-day returns.",
     path: "/checkout",
     noindex: true,
   });

@@ -197,11 +197,11 @@ function MiniCart() {
               <div className="border-b border-line bg-teal-soft px-5 py-3 text-[12.5px] text-teal-deep">
                 {remaining > 0 ? (
                   <>
-                    You're <b>{formatMoney(remaining)}</b> away from free US shipping.
+                    You're <b>{formatMoney(remaining)}</b> away from free shipping.
                   </>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 font-semibold">
-                    <Check className="h-4 w-4" /> Free US shipping unlocked
+                    <Check className="h-4 w-4" /> Free shipping unlocked
                   </span>
                 )}
               </div>

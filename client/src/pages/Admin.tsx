@@ -1645,7 +1645,7 @@ const SETTING_GROUPS: Array<{
     title: "Shipping, tax & returns",
     help: "Drives every price calculation on the storefront.",
     keys: [
-      { key: "free_shipping_threshold_cents", label: "Free shipping over (cents)", type: "number" },
+      { key: "free_shipping_threshold_cents", label: "Free shipping over (cents, 0 = off)", type: "number" },
       { key: "shipping_flat_cents", label: "Flat shipping rate (cents)", type: "number" },
       { key: "tax_rate_bps", label: "Tax rate (basis points, e.g. 600 = 6%)", type: "number" },
       { key: "return_window_days", label: "Return window (days)", type: "number" },

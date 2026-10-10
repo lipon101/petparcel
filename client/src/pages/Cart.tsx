@@ -53,7 +53,7 @@ export default function Cart() {
                 <Truck className="h-5 w-5 shrink-0 text-primary" />
                 <p>
                   Add <strong>{formatMoney(toFreeShip)}</strong> more to unlock{" "}
-                  <strong>free US shipping</strong>.
+                  <strong>free shipping</strong>.
                 </p>
               </div>
             )}

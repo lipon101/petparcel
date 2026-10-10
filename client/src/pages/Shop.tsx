@@ -86,7 +86,7 @@ export default function Shop() {
       <PageHeader
         eyebrow="Shop"
         title={heading}
-        subtitle={`${products.length} product${products.length === 1 ? "" : "s"} · free US shipping over $49 · 30-day returns`}
+        subtitle={`${products.length} product${products.length === 1 ? "" : "s"} · fast, tracked US shipping · 30-day returns`}
       />
 
       <Section className="!pt-9">
