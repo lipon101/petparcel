@@ -172,9 +172,14 @@
   html {
     scroll-padding-top: 8rem;
     -webkit-tap-highlight-color: transparent;
+    /* Guards against the few px of horizontal bleed a wide grid or a fixed
+       panel can introduce at small widths. `clip` (not `hidden`) leaves the
+       sticky header working. */
+    overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    overflow-x: clip;
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 15.5px;
