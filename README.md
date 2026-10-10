@@ -29,6 +29,145 @@ output and local database files are ignored too — see `.gitignore`.
 
 ---
 
+## 0b. Continuous integration (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on **every push** and on **every pull request targeting
+`main`**. It has a single job, `typecheck-and-test`, which:
+
+1. checks out the repo;
+2. installs pnpm **11.15.1** (pinned to the `packageManager` field in `package.json`) and
+   Node **22** (matching `engines.node >= 20.19`);
+3. installs dependencies with `pnpm install --frozen-lockfile`;
+4. runs `pnpm typecheck`; then
+5. runs `pnpm test`.
+
+A newer push to the same ref cancels the in-flight run (`concurrency:`).
+
+**No database service is required.** The suite is hermetic — every data call is mocked and
+no test opens a socket. `DATABASE_URL` and `JWT_SECRET` are supplied as *shape-valid
+placeholders* in the job `env:` purely because `server/_core/env.ts` validates the
+environment at import time (the same reason `vitest.setup.ts` sets them locally); they are
+never used to connect anywhere. If a future test needs a real Postgres, add a
+`services: postgres:` block to the workflow and point `DATABASE_URL` at it.
+
+Verified green on the commit that introduced it:
+
+| | |
+|---|---|
+| Workflow | `CI` |
+| Job / required check name | **`typecheck-and-test`** |
+| Commit | `a3e50ce` |
+| Conclusion | **success** |
+| Run URL | <https://github.com/lipon101/petparcel/actions/runs/38040564128> |
+
+---
+
+## 0c. Branch protection on `main`
+
+`main` is protected. The rule was applied through the GitHub REST API
+(`PUT /repos/lipon101/petparcel/branches/main/protection`) and read back to confirm. What
+is enforced:
+
+| Setting | Value | Effect |
+|---|---|---|
+| **Required status checks** | `typecheck-and-test` (GitHub Actions) | A change cannot merge until CI has passed on it |
+| **Require branch up to date** (`strict`) | `true` | The branch must be rebased on the latest `main` before merging |
+| **Allow force pushes** | `false` | History on `main` cannot be rewritten |
+| **Allow deletions** | `false` | The `main` branch cannot be deleted |
+| **Enforce for admins** | `false` | Repo admins are not blocked — this is what lets an authenticated owner push directly to `main` (`git push origin main`) instead of going through a PR |
+| Required pull-request reviews | none | Merging needs a green CI run, not a human approval |
+
+Changing these later:
+
+```bash
+# read the current rule back
+curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  https://api.github.com/repos/lipon101/petparcel/branches/main/protection
+```
+
+The classic branch-protection API needs **admin** rights on the repository; a token without
+them returns `403 Branch protection is not available for this repository`. Rulesets (the
+newer API) are an alternative with finer-grained bypass controls.
+
+---
+
+## 0d. Deployment
+
+### What `pnpm build` produces
+
+Two artifacts: the SPA at `dist/public/` (Vite) and the server bundle at `dist/index.js`
+(esbuild, dependencies kept external so `node_modules` is installed at runtime). In
+production this app is **one Node process** — `dist/index.js` serves the built SPA *and* the
+API (`/trpc`, `/api`, `/app-storage`) from a single Hono instance listening on
+`process.env.PORT`. `Dockerfile` packages exactly that for a container host (Cloud Run and
+friends).
+
+### Vercel
+
+**Status: not connected. No Vercel credentials are available in this environment,** so the
+project could not be created, linked or deployed here. There is no `VERCEL_TOKEN`, the
+`vercel` CLI is not installed, `~/.vercel` does not exist, and no connectable Vercel
+integration is available. **No deployment exists and none has been faked** — the final
+connect step needs a Vercel token (or a one-time click in the dashboard) from you.
+
+**To connect it:**
+
+1. Vercel → **Add New… → Project → Import Git Repository** → `lipon101/petparcel`.
+2. Build settings (already pinned in `vercel.json` — confirm them):
+   - **Framework preset:** Other
+   - **Install command:** `pnpm install --frozen-lockfile`
+   - **Build command:** `pnpm build`
+   - **Output directory:** `dist/public`
+   - **Node version:** **22** (matches CI and `engines.node`)
+3. Add the environment variables below, then **Deploy**. After that every push to `main`
+auto-deploys, and pull requests get preview deployments.
+
+**Environment variables** — exact names, and where each is read:
+
+| Variable | Required? | Notes |
+|---|---|---|
+| `DATABASE_URL` | **yes** | Postgres connection string. `server/_core/env.ts` throws at boot without it. Prefer a pooled / serverless DSN (e.g. Neon). |
+| `JWT_SECRET` | **yes** | Session-cookie signing secret. A long random string in production — never a placeholder. |
+| `DB_DRIVER` | no | `tcp` (default) or `http` (Neon serverless HTTP — lower latency from functions). |
+| `DB_POOL_MAX` | no | TCP pool cap, default `5`. Ignored when `DB_DRIVER=http`. |
+| `TWOCHECKOUT_SELLER_ID` | for payments | Merchant code from the 2Checkout / Verifone dashboard. |
+| `TWOCHECKOUT_SECRET_KEY` | for payments | Secret key from the same page; used for the hosted-checkout handoff. |
+| `RESEND_API_KEY` | for email | Resend API key. **Absent ⇒ the app still runs** and records the email as `skipped`. |
+| `APP_STORAGE_PRESIGN_URL` | for uploads | Platform file-storage presign endpoint. Absent ⇒ the admin uploader reports “storage isn’t configured yet”; pasting image URLs still works. |
+| `APP_STORAGE_TOKEN` | for uploads | Token for the endpoint above. |
+
+Set these under **Vercel → Project → Settings → Environment Variables** for the
+**Production** environment (add **Preview** too if you want preview builds to work).
+
+The brand **from-address** and **reply-to** are *not* environment variables — they live in
+the database and are edited in the app's own **Admin → Settings → Email**. The brand
+identities are `petparcel@proton.me` (admin) and `hello@petparcel.store` (customer-facing).
+
+**⚠️ One caveat, documented not coded.** The committed `vercel.json` builds the static
+client, but Vercel has no entry point for this app's single Hono process, and
+`@hono/node-server` does not ship a Vercel adapter:
+
+- there is no `api/` function, so `dist/index.js` never runs on Vercel;
+- the `rewrites` catch-all (`/(.*)` → `/index.html`) would swallow `/trpc`, `/api` and
+  `/app-storage` if a root-mounted function were added;
+- the API therefore 404s behind that rewrite.
+
+To run the API on Vercel you would add a serverless function entry — the idiomatic shape is
+`api/index.ts` exporting the Hono app through `hono/vercel` — and narrow the catch-all so
+the API prefixes are excluded (e.g. a `rewrites` source that does not match
+`trpc` / `api` / `app-storage`). Neither is applied here, because it could not be built or
+verified without a Vercel token; the exact rewrite pattern should be checked against
+Vercel's path matching on the first real deploy.
+
+Until then, two working options: run the API from the provided `Dockerfile` on a
+long-running container host (Cloud Run, Fly, Railway) with Vercel serving the static client,
+or host both from a single Node process — which is what the app is built for.
+
+Either way the store stays **fully dynamic and DB-driven**, and **2Checkout remains the only
+payment gateway**.
+
+---
+
 ## 1. Stack
 
 | Layer | Choice |
@@ -334,6 +473,8 @@ The build is checked by executable signals, not by eye. Latest run:
 | Dev-server logs | clean (single instance) |
 | `pnpm test` | **156 passed**, 0 failed |
 | `pnpm typecheck` | 0 errors |
+| GitHub Actions `CI` (`typecheck-and-test`) | **success** — see §0b |
+| Branch protection on `main` | applied and read back — see §0c |
 | Route screenshots | all 22 routes captured and reviewed (`/` … `/contact`) |
 | Computed styles | `h1` and `.brand-name` resolve to `"Libre Baskerville"` with `document.fonts.status === "loaded"` (a real load, not the fallback) |
 | Palette applied | `--pink` `#eb3594`, `--primary` `#d0337f`, `--navy-deep` `#7e2350`, `--blush` `#f8e9e7`; button `rgb(208,51,127)`, footer `rgb(249,236,234)` |
