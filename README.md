@@ -181,7 +181,7 @@ Order emails go out through **[Resend](https://resend.com)** behind
 | **Order confirmation** | an order is placed (`checkout.place`) | itemised lines with qty + prices, subtotal / shipping / total, shipping address, a link to the tracking page |
 | **Shipping notification** | an admin saves a carrier + tracking number on an order that was not already shipped (`admin.setTracking`) | carrier, tracking number, a carrier deep link, the order number |
 
-Both are branded HTML (teal/coral, single column, mobile-friendly) with a plain-text
+Both are branded HTML (navy + warm-orange, single column, mobile-friendly) with a plain-text
 alternative, and both escape customer-supplied text before it reaches the markup.
 
 ### Turning it on — step by step
