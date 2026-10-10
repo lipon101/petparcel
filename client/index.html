@@ -3,14 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f6b60" />
+    <meta name="theme-color" content="#eb3594" />
+    <!-- The hero paints above the fold on the home page; preloading it removes
+         the first-paint flash that a lazy <img> would otherwise cause. -->
+    <link rel="preload" as="image" href="/hero.png" />
 
     <!-- Primary US-market SEO. Per-route tags (title, description, canonical,
          Open Graph, Twitter cards, JSON-LD) are set at runtime by useSeo(). -->
-    <title>PetParcel — Pet Supplies for Dogs &amp; Cats | Free US Shipping Over $49</title>
+    <title>PetParcel — Everyday Pet Supplies for Dogs &amp; Cats</title>
     <meta
       name="description"
-      content="Shop vet-approved dog beds, cat trees, harnesses, toys and grooming gear at PetParcel. Free US shipping over $49, 30-day returns, and US-based support."
+      content="Shop dog beds, cat furniture, harnesses, feeders and grooming gear at PetParcel. A carefully chosen range for dogs and cats, shipped fast and tracked, with 30-day returns."
     />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <meta name="author" content="PetParcel LLC" />
@@ -24,7 +27,7 @@
     <meta property="og:title" content="PetParcel — Pet Supplies for Dogs &amp; Cats" />
     <meta
       property="og:description"
-      content="Vet-approved pet gear shipped free across the USA. Beds, harnesses, toys and grooming — 30-day happy-pet returns."
+      content="Dog beds, cat furniture, harnesses, feeders and grooming gear — a carefully chosen range for dogs and cats, shipped fast and tracked from the USA."
     />
     <meta property="og:url" content="https://www.petparcel.store/" />
     <meta property="og:image" content="https://www.petparcel.store/hero.png" />
@@ -35,7 +38,7 @@
     <meta name="twitter:title" content="PetParcel — Pet Supplies for Dogs &amp; Cats" />
     <meta
       name="twitter:description"
-      content="Vet-approved pet gear shipped free across the USA. 30-day happy-pet returns."
+      content="Dog beds, cat furniture, harnesses and grooming gear for dogs and cats. Fast, tracked US shipping and 30-day returns."
     />
     <meta name="twitter:image" content="https://www.petparcel.store/hero.png" />
 
@@ -44,7 +47,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;0,9..144,700;1,9..144,400..500&family=Outfit:wght@300;400;500;600;700&family=Great+Vibes&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
@@ -60,7 +63,7 @@
             "name": "PetParcel",
             "url": "https://www.petparcel.store",
             "logo": "https://www.petparcel.store/hero.png",
-            "email": "support@petparcel.store",
+            "email": "hello@petparcel.store",
             "telephone": "+1-800-555-0142",
             "address": {
               "@type": "PostalAddress",

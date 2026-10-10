@@ -598,7 +598,7 @@ const TESTIMONIALS = [
     authorName: "Will H.",
     rating: 5,
     title: "Good prices for the quality",
-    body: "Compared this against the big pet stores and it was cheaper for the same thing, with free shipping over $49.",
+    body: "Compared this against the big pet stores and it was cheaper for the same thing, and it arrived quickly.",
   },
   {
     authorName: "Nia F.",

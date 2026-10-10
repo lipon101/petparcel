@@ -58,7 +58,7 @@ export default function ProductDetail() {
         title: product ? product.name : "Product",
         description: product
           ? product.description.slice(0, 155)
-          : "Pet supplies shipped free across the USA.",
+          : "Everyday pet supplies for dogs and cats, shipped fast and tracked from the USA.",
         path: `/product/${slug}`,
         image: images[0] ?? "/hero.png",
         type: "product" as const,
@@ -207,12 +207,14 @@ export default function ProductDetail() {
               ))}
             </div>
 
-            <h1 className="mt-4 text-[30px] font-medium leading-[1.15] sm:text-[38px]">
+            <h1 className="mt-4 text-[24px] leading-[1.22] sm:text-[30px]">
               {product.name}
             </h1>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Stars rating={rating || 4.7} size={16} showValue count={reviews.length} />
+              {reviews.length > 0 && (
+                <Stars rating={rating} size={16} showValue count={reviews.length} />
+              )}
               {reviews.length > 0 && (
                 <a href="#reviews" className="text-[13.5px] font-semibold text-teal hover:text-coral">
                   Read {reviews.length} review{reviews.length === 1 ? "" : "s"}
@@ -307,7 +309,7 @@ export default function ProductDetail() {
                 stock <= 5 ? (
                   <span className="text-amber-700">Only {stock} left — ships today</span>
                 ) : (
-                  <span className="text-teal-deep">In stock — ships within 1 business day</span>
+                  <span className="text-teal-deep">In stock — dispatched fast, tracked door to door</span>
                 )
               ) : (
                 <span className="text-coral-deep">Currently sold out</span>

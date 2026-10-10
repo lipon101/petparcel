@@ -43,7 +43,7 @@ import { ProductGrid, type StoreProduct } from "@/components/site/ProductCard";
 const FAQ_PREVIEW = [
   {
     q: "How quickly will my order ship?",
-    a: "Orders leave our warehouse within one business day. We ship with the best carrier available for your address and email a tracking number the moment your parcel is on its way.",
+    a: "We dispatch orders fast, using the best carrier available for your address, and email a tracking number the moment the label is created. We don't publish a delivery window, because carrier transit varies by address and season.",
   },
   {
     q: "What does shipping cost?",
@@ -124,7 +124,7 @@ export default function Home() {
         <div className="container-page grid items-center gap-12 py-14 lg:grid-cols-2 lg:py-20">
           <div className="animate-in-up">
             <div className="eyebrow">Dogs &amp; cats · shipped across the USA</div>
-            <h1 className="text-[2.5rem] font-medium leading-[1.05] tracking-[-0.025em] sm:text-5xl lg:text-[3.7rem]">
+            <h1 className="text-[30px] leading-[1.18] sm:text-[38px] lg:text-[46px]">
               Everything Your Pet Deserves.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-gray sm:text-[17px]">
@@ -142,7 +142,7 @@ export default function Home() {
 
             <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-[13.5px] text-gray">
               <span className="inline-flex items-center gap-2">
-                <Stars rating={4.8} showValue /> <span>Loved by pet parents</span>
+                <Dog className="h-4 w-4 text-teal" /> Dogs, cats and small pets
               </span>
               <span className="inline-flex items-center gap-2">
                 <Truck className="h-4 w-4 text-teal" /> Fast, tracked shipping
@@ -234,7 +234,7 @@ export default function Home() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="eyebrow">{promo.eyebrow}</div>
-                  <h3 className="text-[22px] font-medium leading-tight">{promo.title}</h3>
+                  <h3 className="text-[19px] font-normal leading-[1.25]">{promo.title}</h3>
                   <p className="mt-2 text-[13.5px] leading-relaxed text-gray">{promo.body}</p>
                   <span className="mt-4 inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-teal transition-colors group-hover:text-coral">
                     {promo.cta} <ArrowRight className="h-4 w-4" />
@@ -295,7 +295,7 @@ export default function Home() {
             {
               icon: Truck,
               title: "Shipped fast and tracked",
-              body: "Your parcel leaves within one business day and is tracked door to door with the best carrier available.",
+              body: "Your parcel is dispatched fast and tracked door to door with the best carrier available for your address.",
             },
             {
               icon: ShieldCheck,

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -6,92 +6,110 @@
    PetParcel design system.
 
    Structure and rhythm follow the reference storefront (rupanjali.com): a
-   three-row header, a warm ground, product cards with a square image well, a
+   three-row header, a soft ground, product cards with a square image well, a
    small tracked category label, a coloured price line and a round add-to-cart
    button.
 
    The system itself is deliberate and tight:
-     · Type  — Fraunces (a warm optical serif) for display, Inter (a neutral
-               grotesque) for body and UI. Two families, no more.
-     · Colour — ONE structural brand hue (deep navy) and ONE confident accent
-               (warm orange), on a warm porcelain ground with a real warm-neutral
-               ramp. No stray accents, no decorative gradients: every surface
-               resolves through these tokens.
-     · Shape  — a considered radius scale (10 / 14 / 18 / 24) and layered,
-               navy-tinted shadows rather than one flat drop-shadow.
+     · Type  — Libre Baskerville (a high-contrast transitional serif) for all
+               display and heading text, Inter (a neutral grotesque) for body
+               and UI. Two families, no more. Libre Baskerville sets wide, so
+               every heading size below is tuned down and re-tracked for it.
+     · Colour — the reference's warm rose system: brand pink #EB3594 as the
+               identity accent, #D24862 as the deeper accent, on a white ground
+               with blush/cream bands and a real warm-neutral ink ramp. Every
+               surface resolves through these tokens — no stray hues.
+     · Contrast — white-on-pink text is only placed on tokens that clear
+               4.5:1 (`--primary` #D0337F = 4.71, `--navy` #B03A6E = 5.68,
+               `--navy-deep` #7E2350 = 8.70). The bright #EB3594 is reserved for
+               non-text use: focus rings, hairlines, decorative fills.
+     · Shape  — a considered radius scale (8 / 12 / 16 / 22) and layered,
+               rose-tinted shadows rather than one flat drop-shadow.
    ========================================================================== */
 
 :root {
-  /* ---- Brand: one structural hue, deep navy ---- */
-  --navy: #16233f;
-  --navy-dark: #101a30;
-  --navy-deep: #0a1222;
-  --navy-soft: #eaeef6;
-  --navy-tint: #f5f7fb;
+  /* ---- Brand pink family ------------------------------------------------
+     #EB3594 is the brand pink (identity: focus rings, hairlines, decorative
+     fills). #D24862 is the deeper accent the brand pairs with it — emphasis,
+     prices, hover/pressed states. #D0337F is the same hue one step deeper,
+     which is what carries white text at AA (4.71:1). */
+  --pink: #eb3594;
+  --pink-dark: #d24862;
+  --pink-deep: #b03a6e;
+  --pink-soft: #fbe3ee;
+  --pink-tint: #fef3f8;
 
-  /* ---- Accent: ONE confident warm orange ---- */
-  --orange: #ef7d1a;
-  --orange-dark: #d96a10;
-  --orange-deep: #b8560a;
-  --orange-soft: #fdeee0;
+  /* ---- Structural rose (dark bands, category pill, icon wells) ----
+     White clears AA on all three (5.68 / 7.26 / 8.70). */
+  --navy: #b03a6e;
+  --navy-dark: #97295c;
+  --navy-deep: #7e2350;
+  --navy-soft: #fbe3ee;
+  --navy-tint: #fef3f8;
 
-  /* ---- Grounds: warm porcelain ---- */
-  --blush: #faf4ec;
-  --cream: #fdfaf6;
-  --footer-bg: #f4eee5;
+  /* ---- Accent — the confident rose that carries text (4.71 on white) ---- */
+  --orange: #d0337f;
+  --orange-dark: #b82a6f;
+  --orange-deep: #97295c;
+  --orange-soft: #fbe3ee;
+
+  /* ---- Grounds: bone white with warm blush bands (reference's own values) ---- */
+  --blush: #f8e9e7;
+  --cream: #faf3f1;
+  --footer-bg: #f9ecea;
 
   /* ---- Warm-neutral ink ramp & hairlines ---- */
-  --ink: #171a20;
-  --ink-2: #3f444d;
-  --gray: #6b7078;
-  --gray-2: #9aa0aa;
-  --line: #e8e3db;
-  --line-soft: #f1ece4;
+  --ink: #1b1b1b;
+  --ink-2: #3a3a3a;
+  --gray: #6e6a6a;
+  --gray-2: #a5a0a0;
+  --line: #efe3e0;
+  --line-soft: #f6eeec;
 
   /* ---- Quiet secondary + rating gold ---- */
-  --sage: #7c8489;
-  --gold: #b8863b;
-  --gold-light: #cf9f42;
+  --sage: #8a8383;
+  --gold: #c69a4e;
+  --gold-light: #dfb45f;
 
   /* ---- Semantic ---- */
-  --green: #2f7d55;
-  --red: #b3402f;
+  --green: #2e7d52;
+  --red: #c0392b;
 
   /* ---- Elevation & shape ---- */
-  --radius: 14px;
-  --shadow-xs: 0 1px 2px rgba(22, 35, 63, 0.05);
-  --shadow-sm: 0 1px 2px rgba(22, 35, 63, 0.05), 0 4px 14px -6px rgba(22, 35, 63, 0.08);
-  --shadow: 0 2px 4px rgba(22, 35, 63, 0.05), 0 12px 30px -12px rgba(22, 35, 63, 0.16);
-  --shadow-lg: 0 4px 10px rgba(22, 35, 63, 0.06), 0 24px 50px -22px rgba(22, 35, 63, 0.24);
-  --shadow-xl: 0 40px 80px -40px rgba(22, 35, 63, 0.32);
+  --radius: 12px;
+  --shadow-xs: 0 1px 2px rgba(158, 40, 64, 0.05);
+  --shadow-sm: 0 1px 2px rgba(158, 40, 64, 0.05), 0 4px 14px -6px rgba(158, 40, 64, 0.08);
+  --shadow: 0 2px 4px rgba(158, 40, 64, 0.05), 0 12px 30px -12px rgba(158, 40, 64, 0.14);
+  --shadow-lg: 0 4px 10px rgba(158, 40, 64, 0.06), 0 24px 50px -22px rgba(158, 40, 64, 0.2);
+  --shadow-xl: 0 40px 80px -40px rgba(158, 40, 64, 0.26);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* ---- shadcn token surface (mapped below) ---- */
-  --background: #fdfaf6;
-  --foreground: #171a20;
+  --background: #ffffff;
+  --foreground: #1b1b1b;
   --card: #ffffff;
-  --card-foreground: #171a20;
+  --card-foreground: #1b1b1b;
   --popover: #ffffff;
-  --popover-foreground: #171a20;
-  --primary: #16233f;
+  --popover-foreground: #1b1b1b;
+  --primary: #d0337f;
   --primary-foreground: #ffffff;
-  --secondary: #f5f7fb;
-  --secondary-foreground: #101a30;
-  --accent: #ef7d1a;
+  --secondary: #fdf1f7;
+  --secondary-foreground: #b03a6e;
+  --accent: #b03a6e;
   --accent-foreground: #ffffff;
-  --muted: #f4eee5;
-  --muted-foreground: #6b7078;
-  --border: #e8e3db;
-  --input: #e2dcd2;
-  --ring: #16233f;
-  --destructive: #b3402f;
+  --muted: #faf3f1;
+  --muted-foreground: #6e6a6a;
+  --border: #efe3e0;
+  --input: #eadfe0;
+  --ring: #eb3594;
+  --destructive: #c0392b;
   --destructive-foreground: #ffffff;
-  --success: #2f7d55;
+  --success: #2e7d52;
   --warning: #b07d3a;
-  --brand-ink: #0a1222;
-  --accent-soft: #fdeee0;
-  --shadow-color: 220 40% 20%;
-  --hero-glow: #eaeef6;
+  --brand-ink: #7e2350;
+  --accent-soft: #fbe3ee;
+  --shadow-color: 338 55% 34%;
+  --hero-glow: #fbe3ee;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -135,10 +153,14 @@
   --color-ink: var(--ink);
   --color-line: var(--line);
   --color-gold: var(--gold);
+  --color-pink: var(--pink);
+  --color-pink-dark: var(--pink-dark);
+  --color-pink-deep: var(--pink-deep);
+  --color-pink-soft: var(--pink-soft);
 
   /* Legacy aliases: the storefront's older class names (teal / coral / gray /
-     line-soft) are remapped onto the new navy + orange system so every existing
-     surface resolves through the one palette instead of drifting. */
+     line-soft) are remapped onto the rose system so every existing surface
+     resolves through the one palette instead of drifting. */
   --color-teal: var(--navy);
   --color-teal-soft: var(--navy-soft);
   --color-teal-deep: var(--navy-dark);
@@ -150,19 +172,22 @@
   --color-line-soft: var(--line-soft);
   --color-sage: var(--sage);
 
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", "Inter", ui-serif, Georgia, serif;
+  /* Libre Baskerville sets wide and has only 400 / 700. Headings use 400 at a
+     reduced size for an elegant, high-contrast look; 700 is reserved for the
+     wordmark and small emphatic runs. */
+  --font-display: "Libre Baskerville", Georgia, "Times New Roman", serif;
 
-  --shadow-xs: 0 1px 2px rgba(22, 35, 63, 0.05);
-  --shadow-sm: 0 1px 2px rgba(22, 35, 63, 0.05), 0 4px 14px -6px rgba(22, 35, 63, 0.08);
-  --shadow-md: 0 2px 4px rgba(22, 35, 63, 0.05), 0 12px 30px -12px rgba(22, 35, 63, 0.16);
-  --shadow-lg: 0 4px 10px rgba(22, 35, 63, 0.06), 0 24px 50px -22px rgba(22, 35, 63, 0.24);
-  --shadow-xl: 0 40px 80px -40px rgba(22, 35, 63, 0.32);
+  --shadow-xs: 0 1px 2px rgba(158, 40, 64, 0.05);
+  --shadow-sm: 0 1px 2px rgba(158, 40, 64, 0.05), 0 4px 14px -6px rgba(158, 40, 64, 0.08);
+  --shadow-md: 0 2px 4px rgba(158, 40, 64, 0.05), 0 12px 30px -12px rgba(158, 40, 64, 0.16);
+  --shadow-lg: 0 4px 10px rgba(158, 40, 64, 0.06), 0 24px 50px -22px rgba(158, 40, 64, 0.24);
+  --shadow-xl: 0 40px 80px -40px rgba(158, 40, 64, 0.32);
 }
 
 @layer base {
@@ -193,9 +218,12 @@
   h4,
   h5 {
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.015em;
-    font-optical-sizing: auto;
+    /* Libre Baskerville ships 400 and 700 only — asking for 500 would be
+       synthesised, so headings are set at 400 and left to the serif's own
+       weight. It also runs wide, hence the gentler negative tracking. */
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.22;
   }
   :focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
@@ -213,12 +241,12 @@
       background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(22, 35, 63, 0.18);
+      background: rgba(158, 40, 64, 0.18);
       border-radius: 9999px;
       border: 3px solid var(--background);
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(22, 35, 63, 0.32);
+      background: rgba(158, 40, 64, 0.32);
     }
   }
 }
@@ -260,10 +288,12 @@
     margin-bottom: 9px;
   }
   .section-title {
-    font-size: clamp(26px, 3.2vw, 36px);
-    font-weight: 500;
-    line-height: 1.12;
-    letter-spacing: -0.022em;
+    /* Sized down and re-tracked for Libre Baskerville, which sets noticeably
+       wider than the sans it replaces — at the sans scale these overflowed. */
+    font-size: clamp(22px, 2.7vw, 30px);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.008em;
   }
   .view-all {
     display: inline-flex;
@@ -305,7 +335,7 @@
   }
   /* Clean, flat grounds — no decorative radial gradients. */
   .surface-mesh {
-    background: linear-gradient(180deg, #fefcf9 0%, var(--background) 100%);
+    background: linear-gradient(180deg, var(--blush) 0%, var(--background) 100%);
   }
   .surface-cream {
     background: var(--cream);
@@ -320,21 +350,21 @@
   }
   .btn-primary {
     @apply bg-primary text-primary-foreground;
-    box-shadow: 0 1px 2px rgba(22, 35, 63, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 2px rgba(158, 40, 64, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
   .btn-primary:hover {
     background: var(--navy-dark);
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px -6px rgba(22, 35, 63, 0.42);
+    box-shadow: 0 8px 20px -6px rgba(158, 40, 64, 0.42);
   }
   .btn-accent {
     @apply bg-accent text-accent-foreground;
-    box-shadow: 0 1px 2px rgba(239, 125, 26, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: 0 1px 2px rgba(208, 51, 127, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
   .btn-accent:hover {
     background: var(--orange-dark);
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px -6px rgba(239, 125, 26, 0.46);
+    box-shadow: 0 8px 20px -6px rgba(208, 51, 127, 0.46);
   }
   .btn-ink {
     @apply bg-foreground text-background;
@@ -346,8 +376,8 @@
     @apply border border-foreground/20 bg-transparent text-foreground;
   }
   .btn-outline:hover {
-    border-color: var(--ink);
-    background: var(--ink);
+    border-color: var(--primary);
+    background: var(--primary);
     color: #fff;
   }
   .btn-ghost {
@@ -441,10 +471,10 @@
   }
   .brand-name {
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 27px;
-    letter-spacing: -0.02em;
-    color: var(--navy);
+    font-weight: 700;
+    font-size: 23px;
+    letter-spacing: -0.012em;
+    color: var(--navy-deep);
   }
   .brand-name .brand-accent {
     color: var(--orange);
@@ -813,7 +843,7 @@
     gap: 1.5px;
   }
   .star {
-    fill: #e4dcd9;
+    fill: #ece3e6;
   }
   .star.filled {
     fill: var(--gold-light);
@@ -859,7 +889,7 @@
   .cat-circle:hover .cat-circle-img {
     border-color: var(--orange);
     transform: translateY(-3px);
-    box-shadow: 0 12px 26px rgba(22, 35, 63, 0.14);
+    box-shadow: 0 12px 26px rgba(158, 40, 64, 0.14);
   }
   .cat-circle-img img {
     width: 100%;
@@ -938,8 +968,9 @@
     flex: none;
   }
   .newsletter-title {
-    font-size: 23px;
-    font-weight: 500;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.25;
     color: var(--navy-deep);
   }
   .newsletter-sub {
@@ -955,7 +986,7 @@
   }
   .newsletter-form input {
     flex: 1;
-    border: 1.5px solid rgba(22, 35, 63, 0.16);
+    border: 1.5px solid rgba(158, 40, 64, 0.16);
     background: #fff;
     border-radius: 8px;
     padding: 12px 16px;
@@ -1065,16 +1096,16 @@
 
   /* ---------- Page hero (inner pages) ---------- */
   .page-hero {
-    background: linear-gradient(180deg, #fbf5ee, var(--background));
+    background: linear-gradient(180deg, var(--blush), var(--background));
     padding: 52px 0 56px;
     text-align: center;
     border-bottom: 1px solid var(--line-soft);
   }
   .page-title {
-    font-size: clamp(30px, 4.2vw, 44px);
-    font-weight: 500;
-    line-height: 1.1;
-    letter-spacing: -0.025em;
+    font-size: clamp(26px, 3.4vw, 38px);
+    font-weight: 400;
+    line-height: 1.16;
+    letter-spacing: -0.012em;
   }
   .page-sub {
     color: var(--gray);
@@ -1345,5 +1376,30 @@
     .animate-in-up {
       animation: none;
     }
+  }
+
+  /* Libre Baskerville ships 400 and 700 only. A heading asking for 500 or 600
+     would be synthesised by the browser, which looks broken in a serif, so
+     every heading is snapped back to the real 400. 700 still works where a
+     heading explicitly asks for it (the wordmark). This sits in the utilities
+     layer so it outranks the font-medium / font-semibold utilities. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-weight: 400;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 4.2vw, 2.9rem);
+    line-height: 1.18;
+    letter-spacing: -0.012em;
+  }
+  /* Long serif headings wrap badly if they are allowed to hyphenate or sit on a
+     single unbreakable word; this keeps them inside their column at 390px. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
   }
 }

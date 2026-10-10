@@ -22,6 +22,49 @@ built from scratch for the **US market** — React + tRPC + Postgres. No Shopify
 
 ---
 
+## 1b. Design system
+
+The storefront's **structure and rhythm** follow the reference storefront (rupanjali.com):
+a three-row header, a soft ground, product cards with a square image well, a small tracked
+category label, a rose price line and a round add-to-cart button. The **palette and type**
+are PetParcel's own.
+
+**Colour.** The whole site resolves through the tokens in `client/src/index.css` — nothing
+is hardcoded per-component, so re-pointing the tokens re-skins every surface at once.
+
+| Token | Value | Role |
+|---|---|---|
+| `--pink` | `#EB3594` | Brand pink — focus rings, hairlines, decorative fills (non-text) |
+| `--pink-dark` | `#D24862` | The deeper accent the brand pairs with it — emphasis, highlights |
+| `--primary` / `--orange` | `#D0337F` | The rose that carries text and buttons (**4.71:1** on white — AA) |
+| `--navy` | `#B03A6E` | Structural rose — dark bands, category pill, icon wells (**5.68:1**) |
+| `--navy-deep` | `#7E2350` | Wordmark and headings that need the most depth (**8.70:1**) |
+| `--blush` | `#F8E9E7` | Warm blush band (section grounds, image wells) |
+| `--cream` | `#FAF3F1` | Soft card/muted surface |
+| `--footer-bg` | `#F9ECEA` | Footer band |
+| `--ink` | `#1B1B1B` | Body text |
+| `--line` | `#EFE3E0` | Hairlines and borders |
+
+**Accessibility.** White text is only placed on tokens that clear 4.5:1 (`--primary`,
+`--navy`, `--navy-deep`). The bright `#EB3594` is deliberately reserved for non-text use,
+because white on it measures ~3.4:1 — it is the identity colour, not a text background.
+
+**Typography.**
+
+| Role | Family |
+|---|---|
+| Display / headings / wordmark | `"Libre Baskerville", Georgia, "Times New Roman", serif` |
+| Body / UI | `Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif` |
+
+Libre Baskerville is loaded from Google Fonts with `display=swap` and is available in only
+400 and 700. Headings are therefore set at **400** (a synthesised 500/600 in a serif looks
+broken) and the wordmark uses 700. Because the face sets noticeably wider than a sans, every
+heading size is clamped and re-tracked down for it (`h1` `clamp(1.6rem, 4.2vw, 2.9rem)`,
+`.section-title` `clamp(22px, 2.7vw, 30px)`), which is what keeps long headings inside their
+column down to 390px.
+
+---
+
 ## 2. Features
 
 **Storefront**
@@ -257,8 +300,26 @@ app/
 - **Order identifiers use a random suffix** (e.g. `PP-M9YRQAPT`), so they are not guessable.
   Guest tracking additionally requires the email used at checkout.
 - **Admin role** is granted only by `pnpm admin:create` — it is never self-assignable.
-- Styling tokens live in `client/src/index.css`; changing the brand palette is a
-  single-block edit there.
+- Styling tokens live in `client/src/index.css`; the palette (section 1b) and the heading
+  type scale are each a single-block edit there.
+
+---
+
+## 8. Verification
+
+The build is checked by executable signals, not by eye. Latest run:
+
+| Signal | Result |
+|---|---|
+| Dev-server logs | clean (single instance) |
+| `pnpm test` | **156 passed**, 0 failed |
+| `pnpm typecheck` | 0 errors |
+| Route screenshots | all 22 routes captured and reviewed (`/` … `/contact`) |
+| Computed styles | `h1` and `.brand-name` resolve to `"Libre Baskerville"` with `document.fonts.status === "loaded"` (a real load, not the fallback) |
+| Palette applied | `--pink` `#eb3594`, `--primary` `#d0337f`, `--navy-deep` `#7e2350`, `--blush` `#f8e9e7`; button `rgb(208,51,127)`, footer `rgb(249,236,234)` |
+| Overflow | `scrollWidth <= innerWidth` at desktop and at a forced 375px column; no heading or card overflow |
+| Product imagery | 20/20 catalog images load on `/shop`, 0 broken |
+| Old palette sweep | zero legacy hex values, `Fraunces` or `Outfit` references remain in `client/`, `server/` or `shared/` |
 
 ---
 

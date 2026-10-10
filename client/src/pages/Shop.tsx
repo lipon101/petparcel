@@ -176,7 +176,7 @@ export default function Shop() {
           <p className="mt-3 text-sm leading-relaxed text-gray">
             We keep a deliberately small range of dog and cat essentials — orthopedic beds, no-pull
             harnesses, enrichment puzzles, grooming tools and cat furniture. Everything is held in our US
-            warehouse, so your order leaves within one business day and is tracked door to door. Shipping is
+            warehouse, so your order is dispatched fast and tracked door to door. Shipping is
             a flat, clearly-shown rate at checkout. Every product carries a 30-day return window, and our
             support team answers by email or phone during business hours.
           </p>

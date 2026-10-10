@@ -61,7 +61,7 @@ const centsToMajor = (cents: number) => (cents / 100).toFixed(2);
 /**
  * 2Checkout / Verifone hosted checkout — the single payment method.
  *
- * With keys present the shopper is sent to 2Checkout's secure card page. With
+ * With keys present the shopper is sent to 2Checkout's hosted card page. With
  * no keys yet, the order is still created and returned to our own order page as
  * unpaid, so the storefront runs end-to-end until the merchant account is live.
  */

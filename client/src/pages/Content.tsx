@@ -38,7 +38,7 @@ export function About() {
           {[
             { stat: "Dogs & cats", label: "Everything we stock is for both" },
             { stat: "30 days", label: "To change your mind, no restocking fee" },
-            { stat: "1 business day", label: "Typical dispatch from our US warehouse" },
+            { stat: "US shipping", label: "A flat rate, shown up front at checkout" },
           ].map((item) => (
             <div key={item.label} className="card-soft p-6 text-center">
               <p className="text-3xl font-medium text-primary">{item.stat}</p>
@@ -78,7 +78,7 @@ export function About() {
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-medium">Questions before you buy?</h2>
           <p className="mt-3 text-sm text-muted-foreground">
-            We answer every message within one business day.
+            We answer every message in the order it arrives, by a person — usually the same day.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <CtaLink to="/contact">Contact support</CtaLink>
@@ -98,7 +98,7 @@ export function Faq() {
   useSeo({
     title: "Frequently Asked Questions",
     description:
-      "Answers about PetParcel shipping times, free-shipping threshold, returns, payment methods, order tracking and product sizing.",
+      "Answers about PetParcel shipping, returns, payment methods, order tracking and product sizing.",
     path: "/faq",
     jsonLd: {
       "@context": "https://schema.org",
@@ -160,7 +160,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: "How long does delivery take?",
-        a: "Orders placed before 2pm EST ship the same business day; anything later goes out the next business day. We ship with the best carrier available for your address, and you'll get a tracking number as soon as the label is created so you can follow it door to door.",
+        a: "We dispatch fast and don't publish a delivery window we can't guarantee — carrier transit varies by address and season. We ship with the best carrier available for your ZIP code and email a tracking number the moment the label is created, so you can follow the parcel door to door.",
       },
       {
         q: "How much is shipping?",
@@ -168,7 +168,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "Do you ship outside the US?",
-        a: "Not yet — we currently ship to US addresses only. Restricting the range is what lets us keep delivery times short and returns simple.",
+        a: "Not yet — we currently ship to US addresses only. Restricting the range is what lets us keep dispatch quick and returns simple.",
       },
       {
         q: "Can I change my order after placing it?",
@@ -185,7 +185,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "How long do refunds take?",
-        a: "We inspect returns within 2 business days of arrival and issue the refund to your original payment method. Your bank typically posts it within 5–10 business days after that.",
+        a: "We inspect each return as it arrives and issue the refund to your original payment method straight away. Your bank then takes its own few days to post it — that part is outside our control.",
       },
       {
         q: "My pet destroyed it. Can I still return it?",
@@ -235,7 +235,7 @@ export function ShippingReturns() {
   useSeo({
     title: "Shipping & Returns",
     description:
-      "PetParcel shipping rates and delivery times for the USA, plus our 30-day returns policy and how to start a return.",
+      "PetParcel's flat US shipping rate, 30-day returns policy, and how to start a return.",
     path: "/shipping-returns",
   });
 
@@ -244,7 +244,7 @@ export function ShippingReturns() {
       <div className="not-prose grid gap-4 sm:grid-cols-3">
         {[
           { icon: Truck, title: "Fast, tracked shipping", body: "Every parcel tracked door to door" },
-          { icon: Clock, title: "Ships in 1 business day", body: "Dispatched from our US warehouse" },
+          { icon: Clock, title: "Dispatched fast", body: "Sent from our US warehouse with the best carrier available" },
           { icon: RotateCcw, title: `${s.return_window_days}-day returns`, body: "No restocking fee" },
         ].map(({ icon: Icon, title, body }) => (
           <div key={title} className="card-soft flex items-start gap-3 p-4">
@@ -261,9 +261,10 @@ export function ShippingReturns() {
 
       <h2>Shipping</h2>
       <p>
-        We ship to all 50 US states from our US warehouse. Orders placed before 2pm EST on a business day are
-        dispatched the same day; anything later goes out the next business day. We ship with the best carrier
-        available for your address, and every parcel is tracked door to door.
+        We ship to all 50 US states from our US warehouse. Orders are dispatched fast — as soon as the same
+        day wherever we can — using the best carrier available for your address, and every parcel is tracked
+        door to door. We deliberately don't publish a delivery window: carrier transit varies by address and
+        season, and we'd rather not promise something we don't control.
       </p>
       <ul>
         <li>
@@ -285,7 +286,7 @@ export function ShippingReturns() {
           <strong>Damaged or faulty on arrival?</strong> Contact support with your order number and a photo —
           we'll send a replacement and cover the return cost.
         </li>
-        <li>Refunds are issued to the original payment method within 2 business days of inspection.</li>
+        <li>Refunds are issued to your original payment method once we've inspected the return.</li>
         <li>
           Bedding, bowls and grooming tools must be free of pet hair to be accepted; this is a hygiene rule, not
           a technicality.
@@ -295,7 +296,7 @@ export function ShippingReturns() {
       <h2>Starting a return</h2>
       <p>
         Email <strong>{s.contact_email}</strong> with your order number and what you'd like to return. We'll
-        reply with a return address and instructions, usually within one business day. Keep the tracking receipt
+        reply with a return address and instructions, usually the same day. Keep the tracking receipt
         for the parcel you send back — it's your proof of postage if anything goes astray.
       </p>
 
@@ -414,7 +415,7 @@ export function Terms() {
 
       <h2>Shipping and risk</h2>
       <p>
-        Delivery estimates are estimates, not guarantees. Risk in the goods passes to you on delivery. If a
+        Any delivery indication we give is an estimate, never a guarantee. Risk in the goods passes to you on delivery. If a
         parcel is confirmed lost by the carrier, we will reship or refund it.
       </p>
 
@@ -480,7 +481,7 @@ export function Contact() {
           align="center"
           eyebrow="Support"
           title="Talk to a human"
-          subtitle={`We answer every message within one business day. You can also reach us by phone during ${s.support_hours}.`}
+          subtitle={`We answer every message in the order it arrives, usually the same day. You can also reach us by phone during ${s.support_hours}.`}
         />
 
         <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
