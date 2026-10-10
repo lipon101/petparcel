@@ -2,53 +2,19 @@ import "dotenv/config"; // load .env into process.env before env.ts reads it.
 // No-op when .env is absent (platform injects real env) and never overrides
 // already-set vars — so it's safe in prod. MUST stay the first import.
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import { trpcServer } from "@hono/trpc-server";
-import { appRouter } from "../routers";
-import { createContext } from "./context";
-import { serveAppStorage } from "./storage";
-import { getJob } from "./jobs";
+import { createApp } from "./app";
 import { mountClient } from "./serve";
 import { env } from "./env";
 
-// Single process: tRPC API + scoped storage proxy + job callbacks + (prod) SPA.
-const app = new Hono();
-
-app.get("/api/health", (c) => c.json({ ok: true }));
-
-// tRPC — all app business endpoints live under /trpc (agent writes routers.ts).
-app.use(
-  "/trpc/*",
-  trpcServer({
-    router: appRouter,
-    createContext: (_opts, c) => createContext(c),
-  }),
-);
-
-// Scoped per-app file storage (DESIGN §5.6): 307 → short-lived signed S3 URL.
-app.all("/app-storage/*", (c) => serveAppStorage(c));
-
-// Platform-signed scheduled-job callback (DESIGN §8.4). The body runs in THIS
-// app's runtime; the platform only triggers on schedule. Until the platform
-// signature scheme exists we REQUIRE (and, later, verify) a signature header,
-// so a registered job can never be triggered by an anonymous caller.
-// TODO(§8.4): replace the presence check with real HMAC verification.
-app.post("/api/_jobs/:name", async (c) => {
-  const signature = c.req.header("x-platform-signature");
-  if (!signature /* || !verifyPlatformSignature(c, signature) */) {
-    return c.text("unauthorized (job callback signature required — DESIGN §8.4)", 401);
-  }
-  const handler = getJob(c.req.param("name"));
-  if (!handler) return c.text("no such job", 404);
-  try {
-    await handler();
-    return c.json({ ok: true });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(`[jobs] "${c.req.param("name")}" failed`, err);
-    return c.text("job failed", 500);
-  }
-});
+// Node entry point: the single long-lived process used by `pnpm dev:api`,
+// `pnpm start` and the Dockerfile / Cloud Run image. It builds the shared Hono
+// app (server/_core/app.ts — the same route table the Vercel function uses),
+// mounts the built SPA in prod, and binds a TCP port.
+//
+// On Vercel this file is NOT the entry point: `serve()` needs a resident
+// process, which serverless functions don't have. Vercel uses api/index.ts
+// (hono/vercel) instead, and serves the SPA from its CDN.
+const app = createApp();
 
 // Client: prod serves built SPA here; dev is served by Vite (which proxies API).
 mountClient(app);
