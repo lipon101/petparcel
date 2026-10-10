@@ -4,10 +4,13 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
   "outputDirectory": "dist/public",
+  "functions": {
+    "api/edge.ts": { "runtime": "edge" }
+  },
   "rewrites": [
-    { "source": "/trpc/:path*", "destination": "/api/index" },
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/app-storage/:path*", "destination": "/api/index" },
+    { "source": "/trpc/:path*", "destination": "/api/edge" },
+    { "source": "/api/:path*", "destination": "/api/edge" },
+    { "source": "/app-storage/:path*", "destination": "/api/edge" },
     { "source": "/((?!api/|trpc/|app-storage/).*)", "destination": "/index.html" }
   ],
   "headers": [

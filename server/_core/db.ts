@@ -1,8 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle as drizzleHttp, type NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { drizzle as drizzleTcp } from "drizzle-orm/node-postgres";
 import type { BatchItem, BatchResponse } from "drizzle-orm/batch";
-import pg from "pg";
 import * as schema from "../../drizzle/schema";
 import { env } from "./env";
 
@@ -37,28 +35,38 @@ import { env } from "./env";
 // way to reach either `.batch` (http) or `.transaction` (tcp).
 export type AppDB = Omit<NeonHttpDatabase<typeof schema>, "transaction" | "batch">;
 
-// Typed from the HTTP database on purpose: http is what serves users, and the two
-// drivers' `execute()` result shapes differ (node-postgres adds `oid`). Typing
-// against the driver that is NOT in production would promise the app author a
-// field that vanishes on deploy.
-function makeTcp() {
-  // `max` is bounded deliberately (see env.dbPoolMax): on the platform this pool
-  // is one of many against a single shared Postgres cluster. node-postgres closes
-  // idle clients on its own, so the cap only binds under concurrent load — which
-  // is exactly when an unbounded pool would take slots away from other apps.
-  const pool = new pg.Pool({ connectionString: env.databaseUrl, max: env.dbPoolMax });
-  // A pool with no error handler is a process that exits. Postgres (and Neon)
-  // closes idle connections, and on a scale-to-zero runtime the container is
-  // frozen between requests, so this is the normal case, not the exotic one:
-  // node treats an idle client's 'error' as unhandled and kills the process,
-  // while the pool itself would just discard the client and carry on.
-  pool.on("error", (err) => console.error("[db] idle client error", err));
-  return drizzleTcp(pool, { schema });
+// The tcp driver lives in a SEPARATE module (db-tcp.ts) and is loaded through a
+// NON-LITERAL dynamic import, so `pg` / `drizzle-orm/node-postgres` are never
+// pulled into an Edge bundle. A literal `import("pg")` fails an edge-target build
+// outright (pg requires node:net / node:tls / node:util) and Vercel's Edge
+// validation rejects a bundle that references node:stream / node:net; and at
+// runtime node-postgres cannot open a TCP socket on Edge at all. On Edge,
+// DB_DRIVER MUST be "http" (see api/edge.ts) — the tcp branch below is only ever
+// taken by the Node entry (local dev, Docker, Cloud Run).
+const tcpModule = "./db-tcp"; // non-literal on purpose — do NOT inline the string
+
+function makeHttp(): AppDB {
+  // Typed from the HTTP database on purpose: http is the driver that serves
+  // users, and the two drivers' `execute()` result shapes differ (node-postgres
+  // adds `oid`). Typing against the driver that is NOT in production would
+  // promise the app author a field that vanishes on deploy.
+  return drizzleHttp(neon(env.databaseUrl), { schema }) as unknown as AppDB;
 }
 
-const driver = env.dbDriver === "http" ? drizzleHttp(neon(env.databaseUrl), { schema }) : makeTcp();
+// A top-level `await` IS the point. On Edge this branch is skipped (DB_DRIVER=http),
+// so the non-literal import is a no-op and no `pg` code is linked into the bundle;
+// on Node it loads node-postgres and builds the bounded pool before the first
+// request. db-tcp.ts is emitted alongside the server bundle (see build-server.mjs)
+// so the runtime `import("./db-tcp")` resolves from dist/index.js.
+let driver: AppDB;
+if (env.dbDriver === "http") {
+  driver = makeHttp();
+} else {
+  const { makeTcp } = (await import(tcpModule)) as { makeTcp: () => AppDB };
+  driver = makeTcp();
+}
 
-export const db: AppDB = driver as unknown as AppDB;
+export const db: AppDB = driver;
 
 /** Run several writes as ONE atomic unit — the replacement for `db.transaction`.
  *
@@ -86,7 +94,9 @@ export async function atomic<T extends Readonly<[BatchItem<"pg">, ...BatchItem<"
     return (driver as NeonHttpDatabase<typeof schema>).batch(build(db));
   }
   const out: unknown[] = [];
-  await (driver as ReturnType<typeof makeTcp>).transaction(async (tx) => {
+  await (driver as unknown as {
+    transaction: (cb: (tx: unknown) => Promise<void>) => Promise<unknown>;
+  }).transaction(async (tx) => {
     // Bound to `tx`, not `db`: builders made from `db` would run on the pool,
     // outside the transaction — atomic in name only.
     for (const q of build(tx as unknown as AppDB)) out.push(await q);
