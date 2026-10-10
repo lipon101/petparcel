@@ -9,6 +9,26 @@ built from scratch for the **US market** — React + tRPC + Postgres. No Shopify
 
 ---
 
+## 0. Repository
+
+| | |
+|---|---|
+| **Remote** | <https://github.com/lipon101/petparcel> |
+| **Default branch** | `main` |
+| **Layout** | the app lives at the repository **root** — `client/`, `server/`, `shared/`, `drizzle/`, `scripts/` |
+
+```bash
+git clone https://github.com/lipon101/petparcel.git
+cd petparcel
+pnpm install && cp .env.example .env    # then fill in DATABASE_URL + JWT_SECRET
+```
+
+Nothing secret is version-controlled. `.env` is ignored and only `.env.example`
+(with placeholder values) ships; `node_modules/`, `dist/`, `.webapp-logs/`, coverage
+output and local database files are ignored too — see `.gitignore`.
+
+---
+
 ## 1. Stack
 
 | Layer | Choice |

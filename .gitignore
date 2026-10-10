@@ -1,8 +1,38 @@
+# ── Dependencies ───────────────────────────────────────────────────────────────
 node_modules/
+.pnpm-store/
+
+# ── Build output ───────────────────────────────────────────────────────────────
 dist/
+build/
+*.tsbuildinfo
+
+# ── Environment / secrets (never commit) ───────────────────────────────────────
 .env
 .env.*
 !.env.example
-.webapp-logs/
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
 *.log
+logs/
+.webapp-logs/
+
+# ── Local databases / dumps ────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+*.db
+pgdata/
+*.sql.gz
+
+# ── Test / coverage output ─────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Platform / editor cruft ────────────────────────────────────────────────────
+.vercel
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
