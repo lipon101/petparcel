@@ -29,6 +29,10 @@ pgdata/
 coverage/
 .nyc_output/
 
+# ── Throwaway local/dev scripts (never commit) ─────────────────────────────────
+scripts/_*
+*.local.*
+
 # ── Platform / editor cruft ────────────────────────────────────────────────────
 .vercel
 .DS_Store
