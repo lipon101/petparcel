@@ -97,7 +97,7 @@ export const SETTINGS_DEFAULTS: SettingsMap = {
   tax_rate_bps: 0,
   shipping_estimate: "3–6 business days",
   return_window_days: 30,
-  payment_provider: "manual",
+  payment_provider: "2checkout",
   currency: "USD",
 };
 

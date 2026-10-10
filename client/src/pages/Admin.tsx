@@ -1532,8 +1532,8 @@ const SETTING_GROUPS: Array<{
   },
   {
     title: "Payments",
-    help: "Gateway keys live in environment variables, never here — this only selects the active provider.",
-    keys: [{ key: "payment_provider", label: "Active payment provider (manual | 2checkout)" }],
+    help: "2Checkout is the only payment method. Keys live in environment variables, never here — add TWOCHECKOUT_SELLER_ID and TWOCHECKOUT_SECRET_KEY to go live.",
+    keys: [{ key: "payment_provider", label: "Payment method (2checkout)" }],
   },
 ];
 

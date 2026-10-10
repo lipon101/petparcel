@@ -67,9 +67,11 @@ export function AddToCartButton({
         addToCart({ product, variant });
       }}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition disabled:pointer-events-none disabled:opacity-55",
-        justAdded ? "bg-emerald-600 text-white" : "bg-primary text-primary-foreground hover:bg-primary/90",
-        size === "sm" ? "h-9 px-3.5 text-sm" : size === "lg" ? "h-12 px-7 text-base" : "h-11 px-5 text-sm",
+        "btn-sheen inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-tight transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-55",
+        justAdded
+          ? "bg-emerald-600 text-white shadow-[var(--shadow-md)]"
+          : "bg-primary text-primary-foreground shadow-xs hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-[var(--shadow-md)]",
+        size === "sm" ? "h-9.5 px-4 text-[13px]" : size === "lg" ? "h-12 px-7 text-[15px]" : "h-11 px-5 text-sm",
         className,
       )}
       aria-label={soldOut ? `${product.name} is sold out` : `Add ${product.name} to cart`}
@@ -80,7 +82,7 @@ export function AddToCartButton({
   );
 }
 
-export function ProductCard({ product }: { product: StoreProduct }) {
+export function ProductCard({ product, index = 0 }: { product: StoreProduct; index?: number }) {
   const stock = totalStock(product);
   const onSale =
     typeof product.compareAtCents === "number" && product.compareAtCents > product.priceCents;
@@ -89,20 +91,29 @@ export function ProductCard({ product }: { product: StoreProduct }) {
     : 0;
 
   return (
-    <article className="group card-soft flex flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
-      <Link to={`/product/${product.slug}`} className="relative block overflow-hidden bg-muted">
+    <article
+      className="card-premium group flex flex-col overflow-hidden"
+      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+    >
+      <Link
+        to={`/product/${product.slug}`}
+        className="relative block overflow-hidden bg-muted"
+        aria-label={product.name}
+      >
         <div className="aspect-square w-full">
           {product.images[0] ? (
             <img
               src={product.images[0]}
               alt={product.name}
               loading="lazy"
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.07]"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-4xl">🐾</div>
           )}
         </div>
+        {/* Subtle darkening on hover so the photo reads as interactive. */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
           {onSale && <Chip tone="coral">Save {discountPct}%</Chip>}
           {product.featured && !onSale && <Chip tone="teal">Best seller</Chip>}
@@ -111,12 +122,15 @@ export function ProductCard({ product }: { product: StoreProduct }) {
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {product.category}
         </p>
-        <h3 className="mt-1 text-sm font-bold leading-snug">
-          <Link to={`/product/${product.slug}`} className="hover:text-primary hover:underline">
+        <h3 className="mt-1.5 text-sm font-bold leading-snug">
+          <Link
+            to={`/product/${product.slug}`}
+            className="transition-colors hover:text-primary"
+          >
             {product.name}
           </Link>
         </h3>
@@ -130,6 +144,8 @@ export function ProductCard({ product }: { product: StoreProduct }) {
         </div>
 
         <div className="mt-4 flex-1" />
+        {/* Always visible — never hover- or breakpoint-gated, so it works for
+            touch, keyboard and mouse alike. */}
         <AddToCartButton product={product} variant={null} size="sm" className="w-full" />
       </div>
     </article>
@@ -139,8 +155,8 @@ export function ProductCard({ product }: { product: StoreProduct }) {
 export function ProductGrid({ products }: { products: StoreProduct[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-      {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
+      {products.map((p, i) => (
+        <ProductCard key={p.id} product={p} index={i} />
       ))}
     </div>
   );

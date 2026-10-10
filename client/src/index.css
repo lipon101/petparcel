@@ -1,59 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 /* Tailwind v4 is CSS-first: no tailwind.config / postcss / autoprefixer.
    Dark mode is class-based (add `dark` on <html>/<body>); shadcn/ui token set.
 
-   PetParcel palette — warm, trustworthy DTC pet brand:
-     primary  warm teal  (#0f766e family)  — actions, links, brand
-     accent   coral      (#f97066 family)  — highlights, sale, CTAs that pop
-     surface  cream      (#fbfaf7 family)  — page background, never pure white
-   The stock slate theme is deliberately replaced in BOTH light and dark blocks. */
+   PetParcel palette — a premium DTC pet brand:
+     primary  deep teal   (#0b6b60 family)  — brand, actions, links
+     accent   coral       (#f2603f family)  — highlights, sale, CTAs that pop
+     surface  warm cream  (#faf8f4 family)  — page background, never pure white
+   The stock slate theme is deliberately replaced in BOTH light and dark blocks,
+   along with the radius, the type scale, the shadow system and the motion. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 1rem;
-  --background: hsl(40 33% 98%);
-  --foreground: hsl(200 28% 12%);
+  --radius: 1.25rem;
+
+  /* Surfaces */
+  --background: hsl(40 42% 98.5%);
+  --foreground: hsl(202 34% 11%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(200 28% 12%);
-  --primary: hsl(174 62% 26%);
+  --card-foreground: hsl(202 34% 11%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(202 34% 11%);
+
+  /* Brand */
+  --primary: hsl(174 82% 23%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(174 28% 94%);
-  --secondary-foreground: hsl(174 62% 20%);
-  --muted: hsl(40 22% 95%);
-  --muted-foreground: hsl(200 12% 42%);
-  --accent: hsl(12 88% 62%);
+  --secondary: hsl(174 44% 95%);
+  --secondary-foreground: hsl(174 80% 17%);
+  --accent: hsl(11 88% 60%);
   --accent-foreground: hsl(0 0% 100%);
-  --destructive: hsl(0 72% 51%);
+
+  /* Neutrals */
+  --muted: hsl(40 26% 96%);
+  --muted-foreground: hsl(202 16% 43%);
+  --border: hsl(180 16% 90%);
+  --input: hsl(180 16% 89%);
+  --ring: hsl(174 82% 30%);
+
+  /* Semantic */
+  --destructive: hsl(0 74% 52%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(180 12% 88%);
-  --input: hsl(180 12% 86%);
-  --ring: hsl(174 62% 32%);
-  --success: hsl(158 64% 32%);
-  --warning: hsl(38 92% 45%);
+  --success: hsl(158 66% 31%);
+  --warning: hsl(38 94% 44%);
+
+  /* Premium extras */
+  --brand-ink: hsl(174 82% 15%);
+  --accent-soft: hsl(11 92% 96%);
+  --shadow-color: 200 40% 20%;
+  --hero-glow: hsl(174 70% 88%);
 }
 
 .dark {
-  --background: hsl(200 32% 8%);
-  --foreground: hsl(40 30% 96%);
-  --card: hsl(200 28% 12%);
-  --card-foreground: hsl(40 30% 96%);
-  --primary: hsl(172 55% 45%);
-  --primary-foreground: hsl(200 40% 8%);
-  --secondary: hsl(200 24% 18%);
-  --secondary-foreground: hsl(40 30% 96%);
-  --muted: hsl(200 22% 17%);
-  --muted-foreground: hsl(200 14% 68%);
-  --accent: hsl(12 82% 62%);
+  --background: hsl(203 36% 7%);
+  --foreground: hsl(40 30% 97%);
+  --card: hsl(203 30% 11%);
+  --card-foreground: hsl(40 30% 97%);
+  --popover: hsl(203 30% 11%);
+  --popover-foreground: hsl(40 30% 97%);
+  --primary: hsl(172 62% 46%);
+  --primary-foreground: hsl(203 44% 8%);
+  --secondary: hsl(203 26% 17%);
+  --secondary-foreground: hsl(40 30% 97%);
+  --accent: hsl(11 84% 62%);
   --accent-foreground: hsl(0 0% 100%);
-  --destructive: hsl(0 62% 45%);
+  --muted: hsl(203 24% 16%);
+  --muted-foreground: hsl(200 16% 70%);
+  --border: hsl(203 22% 21%);
+  --input: hsl(203 22% 23%);
+  --ring: hsl(172 62% 46%);
+  --destructive: hsl(0 64% 46%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(200 20% 22%);
-  --input: hsl(200 20% 24%);
-  --ring: hsl(172 55% 45%);
-  --success: hsl(158 55% 45%);
-  --warning: hsl(38 85% 55%);
+  --success: hsl(158 58% 46%);
+  --warning: hsl(38 88% 54%);
+  --brand-ink: hsl(172 70% 78%);
+  --accent-soft: hsl(11 40% 18%);
+  --shadow-color: 200 60% 3%;
+  --hero-glow: hsl(174 40% 22%);
 }
 
 /* Map design tokens to Tailwind's theme so utilities (bg-primary, border-border,
@@ -63,6 +87,8 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -78,11 +104,26 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 3px);
+  --color-brand-ink: var(--brand-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 6px);
-  --font-display: "Nunito", ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius-2xl: calc(var(--radius) + 14px);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", ui-rounded, system-ui, -apple-system, sans-serif;
+
+  /* Layered shadow system — soft, low-contrast, premium. */
+  --shadow-xs: 0 1px 2px hsl(var(--shadow-color) / 0.05);
+  --shadow-sm: 0 2px 6px -1px hsl(var(--shadow-color) / 0.07), 0 1px 2px hsl(var(--shadow-color) / 0.05);
+  --shadow-md: 0 10px 24px -8px hsl(var(--shadow-color) / 0.12), 0 2px 6px -2px hsl(var(--shadow-color) / 0.06);
+  --shadow-lg: 0 24px 48px -16px hsl(var(--shadow-color) / 0.16), 0 6px 14px -6px hsl(var(--shadow-color) / 0.08);
+  --shadow-xl: 0 40px 72px -24px hsl(var(--shadow-color) / 0.2), 0 10px 20px -10px hsl(var(--shadow-color) / 0.1);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
@@ -92,21 +133,52 @@
   html {
     /* Anchor jumps from the footer/policy pages shouldn't hide under the header. */
     scroll-padding-top: 6rem;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
   h3,
-  h4 {
+  h4,
+  h5 {
     font-family: var(--font-display);
     @apply tracking-tight;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  h1 {
+    letter-spacing: -0.035em;
   }
   /* A visible focus ring everywhere, not just on inputs. */
   :focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+  /* Refined scrollbar on desktop. */
+  @media (min-width: 1024px) {
+    ::-webkit-scrollbar {
+      width: 11px;
+      height: 11px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--shadow-color) / 0.22);
+      border-radius: 9999px;
+      border: 3px solid var(--background);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--shadow-color) / 0.34);
+    }
   }
 }
 
@@ -115,15 +187,138 @@
   .container-page {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
-  /* The card treatment used across the storefront: generous radius, soft shadow. */
+
+  /* The card treatment used across the storefront: generous radius, soft shadow,
+     a hairline border and a lift on hover. */
   .card-soft {
-    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)];
+    @apply rounded-2xl border border-border bg-card;
+    box-shadow: var(--shadow-sm);
   }
+  .card-premium {
+    @apply rounded-2xl border border-border bg-card;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.45s var(--ease-out-soft), transform 0.45s var(--ease-out-soft),
+      border-color 0.45s var(--ease-out-soft);
+  }
+  .card-premium:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
+  }
+
   .pill {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
   }
+
   /* Section rhythm — one vertical rhythm for the whole site. */
   .section {
     @apply py-14 sm:py-20;
+  }
+
+  /* Interactive lift used by cards and tiles. */
+  .hover-lift {
+    transition: transform 0.45s var(--ease-out-soft), box-shadow 0.45s var(--ease-out-soft);
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Warm ambient background for hero-ish sections. */
+  .surface-mesh {
+    background-image:
+      radial-gradient(60rem 32rem at 12% -8%, color-mix(in oklab, var(--hero-glow) 70%, transparent), transparent 60%),
+      radial-gradient(46rem 26rem at 100% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 58%),
+      linear-gradient(180deg, color-mix(in oklab, var(--secondary) 55%, var(--background)), var(--background));
+  }
+  .surface-ink {
+    background-image:
+      radial-gradient(48rem 28rem at 88% -12%, color-mix(in oklab, var(--accent) 26%, transparent), transparent 60%),
+      linear-gradient(150deg, hsl(174 82% 13%) 0%, hsl(182 72% 7%) 100%);
+  }
+
+  /* Gradient text for headline accents. */
+  .text-gradient {
+    background: linear-gradient(100deg, var(--primary) 0%, color-mix(in oklab, var(--primary) 62%, var(--accent)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Primary button with a soft sheen that sweeps on hover. */
+  .btn-sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-120%);
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, white 38%, transparent) 50%,
+      transparent 70%
+    );
+    transition: transform 0.85s var(--ease-out-soft);
+    z-index: -1;
+  }
+  .btn-sheen:hover::after {
+    transform: translateX(120%);
+  }
+
+  /* Frosted sticky chrome. */
+  .glass {
+    background: color-mix(in oklab, var(--background) 82%, transparent);
+    backdrop-filter: saturate(150%) blur(14px);
+    -webkit-backdrop-filter: saturate(150%) blur(14px);
+  }
+
+  /* Hairline divider that fades at both ends. */
+  .divider-glow {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 18%, var(--border) 82%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Entrance motion runs ON MOUNT, never scroll-linked: content is never left
+     hidden waiting for a viewport event, so a no-JS render and a full-page
+     capture both show every element. */
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes float-soft {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    .animate-float {
+      animation: float-soft 7s ease-in-out infinite;
+    }
+    .animate-in-up {
+      animation: reveal-up 0.7s var(--ease-out-soft) both;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-in-up {
+      animation: none;
+    }
   }
 }

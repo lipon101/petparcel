@@ -192,7 +192,7 @@ const checkoutRouter = router({
         items: z.array(cartLineSchema).min(1, "Your cart is empty"),
         shippingAddress: addressSchema,
         billingAddress: addressSchema.optional(),
-        paymentProvider: z.string().default("manual"),
+        paymentProvider: z.string().default("2checkout"),
         notes: z.string().max(500).optional().nullable(),
         saveAddress: z.boolean().optional(),
         /** Absolute site origin, so the gateway can return the shopper here. */
@@ -256,7 +256,7 @@ const checkoutRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
       if (order.paymentStatus === "paid") return { paid: true, status: "paid" };
 
-      const providerId = order.paymentProvider ?? "manual";
+      const providerId = order.paymentProvider ?? "2checkout";
       const paid = await verifyPayment(providerId, order.orderNumber);
       if (paid) {
         await q.updateOrderPayment({

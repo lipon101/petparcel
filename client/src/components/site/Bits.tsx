@@ -19,7 +19,7 @@ export function Section({
   muted?: boolean;
 }) {
   return (
-    <section className={cn("section", muted && "bg-secondary/40", className)}>
+    <section className={cn("section", muted && "surface-mesh", className)}>
       <div className="container-page">{children}</div>
     </section>
   );
@@ -41,23 +41,52 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "mb-8 flex flex-col gap-3 sm:mb-10",
+        "mb-8 flex flex-col gap-4 sm:mb-12",
         align === "center" ? "items-center text-center" : "sm:flex-row sm:items-end sm:justify-between",
       )}
     >
       <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
         {eyebrow && (
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-accent">{eyebrow}</p>
+          <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
+            <span className="h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
+            {eyebrow}
+          </p>
         )}
-        <h2 className="text-2xl font-extrabold sm:text-3xl lg:text-4xl">{title}</h2>
-        {subtitle && <p className="mt-3 text-base leading-relaxed text-muted-foreground">{subtitle}</p>}
+        <h2 className="text-[1.7rem] font-extrabold leading-[1.12] sm:text-4xl lg:text-[2.6rem]">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground sm:text-base">{subtitle}</p>
+        )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
-// ── Badges & chips ───────────────────────────────────────────────────────────
+/** Entrance wrapper: a short mount animation with the final state as the resting
+ *  state, so content is always present — never gated behind a scroll event.
+ *  The CSS honours prefers-reduced-motion and the class is a no-op without it. */
+export function Reveal({
+  children,
+  className,
+  delay,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  return (
+    <div
+      className={cn("animate-in-up", className)}
+      style={delay ? { animationDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Badges & chips ────────────────────────────────────────────────────────────
 export function Chip({
   children,
   tone = "muted",
@@ -68,14 +97,16 @@ export function Chip({
   className?: string;
 }) {
   const tones: Record<string, string> = {
-    muted: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
+    muted: "bg-card/95 text-muted-foreground ring-1 ring-inset ring-border backdrop-blur",
     teal: "bg-secondary text-secondary-foreground ring-1 ring-inset ring-primary/15",
-    coral: "bg-accent text-accent-foreground",
-    amber: "bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200",
+    coral: "bg-accent text-accent-foreground shadow-sm",
+    amber: "bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200",
     green: "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200",
-    slate: "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200",
+    slate: "bg-slate-900/85 text-white backdrop-blur",
   };
-  return <span className={cn("pill", tones[tone], className)}>{children}</span>;
+  return (
+    <span className={cn("pill shadow-xs", tones[tone], className)}>{children}</span>
+  );
 }
 
 export function Stars({
@@ -90,7 +121,10 @@ export function Stars({
   count?: number;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5" aria-label={`${rating.toFixed(1)} out of 5 stars`}>
+    <span
+      className="inline-flex items-center gap-1.5"
+      aria-label={`${rating.toFixed(1)} out of 5 stars`}
+    >
       <span className="inline-flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((i) => (
           <Star
@@ -103,10 +137,10 @@ export function Stars({
           />
         ))}
       </span>
-      {showValue && <span className="text-xs font-semibold text-muted-foreground">{rating.toFixed(1)}</span>}
-      {typeof count === "number" && (
-        <span className="text-xs text-muted-foreground">({count})</span>
+      {showValue && (
+        <span className="text-xs font-bold tracking-tight text-foreground">{rating.toFixed(1)}</span>
       )}
+      {typeof count === "number" && <span className="text-xs text-muted-foreground">({count})</span>}
     </span>
   );
 }
@@ -132,7 +166,9 @@ export function PriceTag({
         {formatMoney(priceCents)}
       </span>
       {onSale && (
-        <span className="text-sm text-muted-foreground line-through">{formatMoney(compareAtCents)}</span>
+        <span className="text-sm font-medium text-muted-foreground line-through">
+          {formatMoney(compareAtCents)}
+        </span>
       )}
     </span>
   );
@@ -151,13 +187,13 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="card-soft flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary">
+    <div className="card-premium flex flex-col items-center gap-3 px-6 py-16 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary">
         {icon ?? <span className="text-2xl">🐾</span>}
       </div>
-      <h3 className="text-lg font-bold">{title}</h3>
+      <h3 className="mt-1 text-lg font-bold">{title}</h3>
       <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{body}</p>
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className="mt-3">{action}</div>}
     </div>
   );
 }
@@ -206,7 +242,7 @@ export function ErrorState({
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+            className={cn(buttonStyles.primary, buttonStyles.sizes.md, "btn-sheen")}
           >
             Try again
           </button>
@@ -225,13 +261,18 @@ export function TrustStrip({
   return (
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {items.map((item) => (
-        <li key={item.title} className="card-soft flex items-start gap-3 p-4">
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+        <li
+          key={item.title}
+          className="card-premium flex items-start gap-3.5 p-5"
+        >
+          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary ring-1 ring-inset ring-primary/12">
             ✓
           </span>
           <span>
             <span className="block text-sm font-bold">{item.title}</span>
-            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{item.body}</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+              {item.body}
+            </span>
           </span>
         </li>
       ))}
@@ -241,19 +282,28 @@ export function TrustStrip({
 
 // ── Buttons (anchor-friendly) ────────────────────────────────────────────────
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold tracking-tight transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export type ButtonVariant = "primary" | "accent" | "outline" | "ghost";
 
 export const buttonStyles = {
-  primary: cn(buttonBase, "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"),
-  accent: cn(buttonBase, "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm"),
-  outline: cn(buttonBase, "border border-input bg-card hover:bg-secondary"),
-  ghost: cn(buttonBase, "hover:bg-secondary"),
+  primary: cn(
+    buttonBase,
+    "btn-sheen bg-primary text-primary-foreground shadow-[var(--shadow-md)] hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-[var(--shadow-lg)] active:translate-y-0",
+  ),
+  accent: cn(
+    buttonBase,
+    "btn-sheen bg-accent text-accent-foreground shadow-[var(--shadow-md)] hover:-translate-y-0.5 hover:bg-accent/92 hover:shadow-[var(--shadow-lg)] active:translate-y-0",
+  ),
+  outline: cn(
+    buttonBase,
+    "border border-border bg-card text-foreground shadow-xs hover:-translate-y-0.5 hover:border-primary/40 hover:bg-secondary/60 hover:shadow-[var(--shadow-sm)] active:translate-y-0",
+  ),
+  ghost: cn(buttonBase, "text-foreground hover:bg-secondary/70"),
   sizes: {
-    sm: "h-9 px-4 text-sm",
+    sm: "h-9.5 px-4 text-[13px]",
     md: "h-11 px-6 text-sm",
-    lg: "h-12 px-7 text-base",
+    lg: "h-13 px-8 text-[15px]",
   },
 };
 
@@ -283,15 +333,15 @@ export function CtaLink({
   );
 }
 
-// ── Breadcrumbs ─────────────────────────────────────────────────────────────
+// ── Breadcrumbs ──────────────────────────────────────────────────────────────
 export function Breadcrumbs({ trail }: { trail: { label: string; to?: string }[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-5">
+    <nav aria-label="Breadcrumb" className="mb-6">
       <ol className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         {trail.map((crumb, i) => (
           <li key={`${crumb.label}-${i}`} className="flex items-center gap-2">
             {crumb.to ? (
-              <Link to={crumb.to} className="hover:text-foreground hover:underline">
+              <Link to={crumb.to} className="transition hover:text-foreground hover:underline">
                 {crumb.label}
               </Link>
             ) : (
@@ -317,9 +367,10 @@ export function PolicyPage({
   return (
     <Section>
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-extrabold sm:text-4xl">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated {updated}</p>
-        <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-muted-foreground [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-foreground [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-foreground [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
+        <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">{title}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">Last updated {updated}</p>
+        <div className="divider-glow my-8" />
+        <div className="space-y-6 text-[15px] leading-relaxed text-muted-foreground [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-foreground [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-foreground [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
           {children}
         </div>
       </div>

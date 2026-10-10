@@ -3,7 +3,7 @@
 // address to their account in the same step.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { CreditCard, Lock, ShieldCheck, Truck, Wallet } from "lucide-react";
+import { CreditCard, Lock, ShieldCheck, Truck } from "lucide-react";
 import { trpc } from "@/_core/trpc";
 import { useAuth } from "@/_core/useAuth";
 import { useCart, useSeo, currentOrigin } from "@/lib/petparcel";
@@ -195,7 +195,7 @@ export default function Checkout() {
         /* storage unavailable — the confirmation page will ask for the email */
       }
       clear();
-      // A hosted gateway gets an absolute URL; manual mode gets our own path.
+      // A hosted gateway gets an absolute URL; an unconnected store gets our own path.
       if (/^https?:\/\//i.test(result.redirectUrl)) {
         window.location.href = result.redirectUrl;
       } else {
@@ -226,7 +226,7 @@ export default function Checkout() {
       items: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty })),
       shippingAddress: toPayload(shipping),
       billingAddress: billingSame ? undefined : toPayload(billing),
-      paymentProvider: paymentProvider || "manual",
+      paymentProvider: paymentProvider || "2checkout",
       notes: notes || undefined,
       saveAddress: Boolean(user) && saveAddress,
       origin: currentOrigin(),
@@ -366,7 +366,7 @@ export default function Checkout() {
                   />
                   <span>
                     <span className="flex items-center gap-2 text-sm font-bold">
-                      {p.id === "manual" ? <Wallet className="h-4 w-4 text-primary" /> : <CreditCard className="h-4 w-4 text-primary" />}
+                      <CreditCard className="h-4 w-4 text-primary" />
                       {p.label}
                     </span>
                     <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
@@ -454,9 +454,7 @@ export default function Checkout() {
 
             {selectedProvider && (
               <p className="text-center text-xs leading-relaxed text-muted-foreground">
-                {selectedProvider.id === "manual"
-                  ? "No card is charged now — we'll send an invoice and ship once payment clears."
-                  : `You'll continue to ${selectedProvider.label} to pay securely.`}
+                {`You'll continue to ${selectedProvider.label} to pay securely.`}
               </p>
             )}
 

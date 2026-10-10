@@ -29,7 +29,6 @@ switching provider is a config change plus credentials.
 | Provider | BD merchant? | Physical goods? | US cards? | Typical cost | Verdict |
 |---|---|---|---|---|---|
 | **2Checkout (Verifone)** | ✅ Yes | ✅ Yes | ✅ Visa/MC/Amex | ~3.5% + $0.35 per txn, no monthly fee on standard plans | **The single supported gateway** |
-| **SSLCommerz** | ✅ Yes (local entity) | ✅ Yes | ✅ international cards in USD | ~2.5–3.5% | Not integrated — 2Checkout is the only gateway |
 | **Paddle** | ⚠️ | ❌ Digital/SaaS only | ✅ | 5% + $0.50 | ❌ Physical goods prohibited |
 | **Lemon Squeezy** | ⚠️ | ❌ Digital only | ✅ | 5% + $0.50 | ❌ Physical goods prohibited |
 | **Gumroad** | ⚠️ | ⚠️ Limited physical support | ✅ | ~10% | ❌ Poor fit for a real storefront |
@@ -54,11 +53,12 @@ switching provider is a config change plus credentials.
 Bangladesh-based merchants, explicitly permits physical goods, accepts US
 Visa/Mastercard/Amex, requires no monthly fee on standard plans, and gives you a hosted
 checkout you simply redirect to. That matches exactly what this app implements — the
-payment abstraction ships with `2checkout` and `manual` only.
+payment abstraction ships with `2checkout` only.
 
-**Meanwhile: `manual` mode** — the store ships with this active. Orders are recorded as
-*unpaid* and you invoice by bank transfer. Nothing blocks you from launching and taking
-orders before the 2Checkout account is approved.
+**Before the account is approved** the store still runs end-to-end: orders are recorded as
+*unpaid* and an admin settles them offline by marking them paid. Nothing blocks you from
+launching and taking orders while the 2Checkout application is in review. There is no
+invoice or bank-transfer option in the store — card payment is the only method.
 
 **The owner's remaining steps are exactly two:** (1) apply for a 2Checkout (Verifone)
 merchant account, then (2) paste the keys into the Vercel environment variables. No code
@@ -95,7 +95,7 @@ implementing it and registering it — no changes to checkout, orders or the adm
 
 ```ts
 interface PaymentProvider {
-  id: string;                     // "2checkout" | "manual"
+  id: string;                     // "2checkout"
   label: string;
   isConfigured(): boolean;        // are the env credentials present?
   start(input): Promise<{ redirectUrl: string; instructions?: string }>;
@@ -110,7 +110,8 @@ Flow in this app:
    order number as the merchant reference.
 3. On return, the server **pulls** the order status from the provider and marks the order
    *paid* (and logs it to the order's activity timeline).
-4. For `manual`, no call is made — you settle offline and mark it paid in the admin panel.
+4. If no keys are configured, no call is made — the order stays *unpaid* and an admin
+   settles it offline.
 
 Because confirmation is a server-side pull, no public webhook endpoint is required. If you
 later add one, keep `verifyPayment` as the authority — never trust a redirect alone.
@@ -122,6 +123,6 @@ later add one, keep `verifyPayment` as the authority — never trust a redirect 
 - **Test mode first.** 2Checkout has test credentials; use them before going live.
 - **Watch FX and settlement.** You will be paid in USD and settle to a BDT account — compare
   both the processing fee and the FX spread, not just the headline percentage.
-- **Keep a manual path.** If a payment fails or a card is declined, `manual` mode means you
-  can still close the sale instead of losing the order.
+- **Settle declines offline.** If a card is declined, an admin can still mark the order
+  paid once payment is arranged another way, instead of losing the sale.
 - **Re-check fees annually.** Card processing pricing and Bangladesh eligibility both move.

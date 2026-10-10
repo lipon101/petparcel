@@ -28,6 +28,7 @@ import {
   Chip,
   CtaLink,
   ProductGridSkeleton,
+  Reveal,
   Section,
   SectionHeading,
   Stars,
@@ -54,7 +55,7 @@ const FAQ_PREVIEW = [
   },
 ];
 
-// Category → icon + accent, so the roundels read as a real category rail.
+// Category → icon, so the roundels read as a real category rail.
 const CATEGORY_ICONS: Record<string, typeof Dog> = {
   Dogs: Dog,
   Cats: Cat,
@@ -110,20 +111,20 @@ export default function Home() {
   return (
     <>
       {/* ── Hero banner ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-secondary/50">
-        <div className="container-page grid items-center gap-10 py-12 lg:grid-cols-2 lg:py-20">
-          <div>
-            <Chip tone="teal" className="mb-4">
+      <section className="surface-mesh relative overflow-hidden">
+        <div className="container-page grid items-center gap-12 py-14 lg:grid-cols-2 lg:py-24">
+          <div className="animate-in-up">
+            <Chip tone="teal" className="mb-5">
               <Sparkles className="h-3.5 w-3.5" /> Trusted by 40,000+ US pet parents
             </Chip>
-            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-[2.6rem] font-extrabold leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:text-[4.2rem]">
               {s.hero_headline}
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               {s.hero_subhead}
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <CtaLink to="/shop" size="lg">
                 Shop pet essentials <ArrowRight className="h-4 w-4" />
               </CtaLink>
@@ -132,7 +133,7 @@ export default function Home() {
               </CtaLink>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-2">
                 <Stars rating={4.8} showValue /> <span>average from 2,100+ reviews</span>
               </span>
@@ -142,8 +143,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-xl">
+          <div className="relative animate-in-up" style={{ animationDelay: "120ms" }}>
+            <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-tr from-primary/12 via-transparent to-accent/14 blur-2xl" />
+            <div className="overflow-hidden rounded-[2.25rem] border border-border bg-card shadow-[var(--shadow-xl)]">
               <img
                 src="/hero.png"
                 alt="A happy golden retriever and a cat relaxing together at home"
@@ -152,9 +154,16 @@ export default function Home() {
                 height={1024}
               />
             </div>
-            <div className="absolute -bottom-4 left-4 hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-lg sm:block">
-              <p className="text-xs font-semibold text-muted-foreground">Delivered in</p>
+            <div className="animate-float absolute -bottom-5 left-4 hidden rounded-2xl border border-border bg-card/95 px-5 py-3.5 shadow-[var(--shadow-lg)] backdrop-blur sm:block">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Delivered in
+              </p>
               <p className="text-sm font-extrabold">{s.shipping_estimate}</p>
+            </div>
+            <div className="animate-float absolute -right-3 top-8 hidden rounded-2xl border border-border bg-card/95 px-4 py-3 shadow-[var(--shadow-lg)] backdrop-blur sm:block" style={{ animationDelay: "1.4s" }}>
+              <p className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                <ShieldCheck className="h-4 w-4" /> 30-day returns
+              </p>
             </div>
           </div>
         </div>
@@ -162,13 +171,13 @@ export default function Home() {
 
       {/* ── Category roundels ───────────────────────────────────────────────── */}
       {cats.length > 0 && (
-        <Section className="!py-10">
+        <Section className="!py-12 sm:!py-14">
           <SectionHeading
             align="center"
             eyebrow="Shop by category"
             title="Find exactly what your pet needs"
           />
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-12">
             {cats.map((c) => {
               const Icon = CATEGORY_ICONS[c] ?? Dog;
               return (
@@ -177,10 +186,12 @@ export default function Home() {
                   href={`/shop?category=${encodeURIComponent(c)}`}
                   className="group flex w-24 flex-col items-center gap-3 text-center sm:w-28"
                 >
-                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-primary ring-1 ring-inset ring-primary/10 transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-24 sm:w-24">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-card text-primary ring-1 ring-inset ring-border shadow-[var(--shadow-sm)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-[var(--shadow-lg)] sm:h-24 sm:w-24">
                     <Icon className="h-8 w-8 sm:h-9 sm:w-9" />
                   </span>
-                  <span className="text-sm font-bold leading-tight group-hover:text-primary">{c}</span>
+                  <span className="text-sm font-bold leading-tight transition-colors group-hover:text-primary">
+                    {c}
+                  </span>
                 </a>
               );
             })}
@@ -219,7 +230,7 @@ export default function Home() {
       </Section>
 
       {/* ── Trust strip ─────────────────────────────────────────────────────── */}
-      <Section muted className="!py-10">
+      <Section muted className="!py-12">
         <TrustStrip items={TRUST_BADGES} />
       </Section>
 
@@ -263,14 +274,16 @@ export default function Home() {
               title: "Transparent pricing",
               body: `Free shipping over $${freeShip}, a flat rate below that, and no surprise fees at checkout.`,
             },
-          ].map(({ icon: Icon, title, body }) => (
-            <div key={title} className="card-soft p-6">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary">
-                <Icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 text-base font-bold">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
-            </div>
+          ].map(({ icon: Icon, title, body }, i) => (
+            <Reveal key={title} delay={i * 60}>
+              <div className="card-premium h-full p-6">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-primary ring-1 ring-inset ring-primary/10">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 text-base font-bold">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </Section>
@@ -285,21 +298,23 @@ export default function Home() {
             subtitle="Every review below is from a verified PetParcel order."
           />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {(reviews ?? []).map((r) => (
-              <figure key={r.id} className="card-soft flex h-full flex-col p-6">
-                <Stars rating={r.rating} size={16} />
-                {r.title && <p className="mt-3 text-sm font-bold">{r.title}</p>}
-                <blockquote className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                  “{r.body}”
-                </blockquote>
-                <figcaption className="mt-4 flex items-center gap-2 text-xs font-semibold">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-                    {r.authorName.charAt(0)}
-                  </span>
-                  <span>{r.authorName}</span>
-                  {r.verified && <Chip tone="green">Verified</Chip>}
-                </figcaption>
-              </figure>
+            {(reviews ?? []).map((r, i) => (
+              <Reveal key={r.id} delay={i * 60}>
+                <figure className="card-premium flex h-full flex-col p-6">
+                  <Stars rating={r.rating} size={16} />
+                  {r.title && <p className="mt-3 text-sm font-bold">{r.title}</p>}
+                  <blockquote className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    “{r.body}”
+                  </blockquote>
+                  <figcaption className="mt-5 flex items-center gap-2.5 text-xs font-semibold">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                      {r.authorName.charAt(0)}
+                    </span>
+                    <span>{r.authorName}</span>
+                    {r.verified && <Chip tone="green">Verified</Chip>}
+                  </figcaption>
+                </figure>
+              </Reveal>
             ))}
           </div>
         </Section>
@@ -307,7 +322,7 @@ export default function Home() {
 
       {/* ── FAQ preview ─────────────────────────────────────────────────────── */}
       <Section>
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr]">
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr] lg:gap-16">
           <div>
             <SectionHeading
               eyebrow="Help center"
@@ -320,10 +335,13 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {FAQ_PREVIEW.map((item) => (
-              <details key={item.q} className="card-soft group p-5 [&_summary::-webkit-details-marker]:hidden">
+              <details
+                key={item.q}
+                className="card-premium group p-5 [&_summary::-webkit-details-marker]:hidden"
+              >
                 <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-bold">
                   {item.q}
-                  <Plus className="h-4 w-4 shrink-0 text-primary transition group-open:rotate-45" />
+                  <Plus className="h-4 w-4 shrink-0 text-primary transition-transform duration-300 group-open:rotate-45" />
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
               </details>
@@ -334,15 +352,17 @@ export default function Home() {
 
       {/* ── Closing CTA ─────────────────────────────────────────────────────── */}
       <Section muted>
-        <div className="card-soft overflow-hidden">
+        <div className="card-premium overflow-hidden">
           <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[1.3fr_1fr]">
             <div>
-              <h2 className="text-2xl font-extrabold sm:text-3xl">Free shipping on orders over ${freeShip}</h2>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              <h2 className="text-[1.7rem] font-extrabold sm:text-3xl">
+                Free shipping on orders over ${freeShip}
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Stock up on the things your pet actually uses. Everything ships from the US, arrives in{" "}
                 {s.shipping_estimate}, and comes with a {s.return_window_days}-day return window.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap gap-3">
                 <CtaLink to="/shop" size="lg">
                   Start shopping <ArrowRight className="h-4 w-4" />
                 </CtaLink>
@@ -351,14 +371,14 @@ export default function Home() {
                 </CtaLink>
               </div>
             </div>
-            <ul className="space-y-3 text-sm">
+            <ul className="space-y-3.5 text-sm">
               {[
                 `Free US shipping over $${freeShip}`,
                 `Flat $${(s.shipping_flat_cents / 100).toFixed(2)} below that`,
                 `${s.return_window_days}-day returns, no restocking fee`,
                 "Secure card checkout via a PCI-compliant gateway",
               ].map((line) => (
-                <li key={line} className="flex items-start gap-2">
+                <li key={line} className="flex items-start gap-2.5">
                   <Star className="mt-0.5 h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
                   <span className="text-muted-foreground">{line}</span>
                 </li>

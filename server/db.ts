@@ -756,11 +756,21 @@ export async function updateOrderTracking(input: {
   carrier: string | null;
   note?: string | null;
 }) {
+  // Adding a tracking number means the parcel has left the warehouse, so the
+  // order status must move to "shipped" in the SAME write as the "shipped"
+  // event we log — otherwise the history says shipped while the order still
+  // reads pending, and the customer's tracking page shows the wrong step.
+  const hasTracking = Boolean(input.trackingNumber);
   await atomic((d) =>
     batch([
       d
         .update(orders)
-        .set({ trackingNumber: input.trackingNumber, carrier: input.carrier, updatedAt: sql`now()` })
+        .set({
+          trackingNumber: input.trackingNumber,
+          carrier: input.carrier,
+          ...(hasTracking ? { status: "shipped" } : {}),
+          updatedAt: sql`now()`,
+        })
         .where(eq(orders.id, input.orderId)),
       d.insert(orderEvents).values({
         id: crypto.randomUUID(),

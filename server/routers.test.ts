@@ -22,16 +22,18 @@ vi.mock("./store-settings", () => ({
 
 vi.mock("./services/payments", () => ({
   getProvider: vi.fn(() => ({
-    id: "manual",
-    label: "Pay on invoice",
+    id: "2checkout",
+    label: "Credit or debit card",
     isConfigured: () => true,
-    describe: () => "offline",
+    describe: () => "2Checkout hosted checkout",
     start: vi.fn(async (input: { orderNumber: string }) => ({
       redirectUrl: `/order/${input.orderNumber}`,
       instructions: "ok",
     })),
   })),
-  listProviders: vi.fn(() => [{ id: "manual", label: "Pay on invoice", configured: true, describe: "offline" }]),
+  listProviders: vi.fn(() => [
+    { id: "2checkout", label: "Credit or debit card", configured: true, describe: "2Checkout hosted checkout" },
+  ]),
   verifyPayment: vi.fn(async () => false),
 }));
 
@@ -221,7 +223,7 @@ describe("checkout.place", () => {
     });
 
     expect(result.orderNumber).toBe("PP-ABCDEFGH");
-    expect(result.provider).toBe("manual");
+    expect(result.provider).toBe("2checkout");
     expect(result.redirectUrl).toBe("/order/PP-ABCDEFGH");
     // Prices come from the catalog, never from the client payload.
     expect(createOrder).toHaveBeenCalledWith(

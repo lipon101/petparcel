@@ -68,7 +68,7 @@ export default function OrderConfirmation() {
     const order = lookup.data?.order;
     if (!order) return;
     if (order.paymentStatus !== "unpaid") return;
-    if (order.paymentProvider === "manual") return;
+    if (order.paymentProvider !== "2checkout") return;
     setConfirmTried(true);
     confirmPayment.mutate({ orderNumber: order.orderNumber });
   }, [lookup.data?.order, confirmTried, authLoading]);
@@ -337,9 +337,9 @@ export default function OrderConfirmation() {
                   <dd className="font-semibold text-foreground">{formatDateTime(order.createdAt)}</dd>
                 </div>
               </dl>
-              {!paid && order.paymentProvider === "manual" && (
+              {!paid && (
                 <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
-                  An invoice with bank-transfer details will follow. Your items are reserved until payment clears.
+                  Just paid? Card payments can take a moment to confirm — refresh this page in a minute.
                 </p>
               )}
             </div>
