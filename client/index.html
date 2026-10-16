@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <!-- Google tag (gtag.js) + Google Consent Mode v2.
+
+         ORDER MATTERS, and it is the reason both consent defaults live INSIDE
+         this snippet rather than in a block of their own below it. Google's
+         documented order is: load the Google tag, then set the DEFAULT consent
+         state, then optionally send an UPDATE. A `gtag('config', ...)` that runs
+         before any default has been set reads a consent state that was never
+         established --- the "tag read consent state before a default was set"
+         failure --- and the first hit then goes out with the wrong signals. So
+         the two defaults sit immediately after `gtag('js', ...)` and strictly
+         before the config command.
+
+         THE DEFAULTS ARE REGION-SCOPED, which is Google's recommended pattern
+         and the fix for "GA4 receives no data". Storage is DENIED in the EEA,
+         the UK and Switzerland --- where the ePrivacy Directive and the GDPR
+         (and UK GDPR / PECR, and the revised Swiss FADP) require consent BEFORE
+         storage is used --- and GRANTED everywhere else, so the store's main
+         United States audience is measured normally instead of only ever
+         producing cookieless pings. A gtag consent default WITHOUT a `region`
+         applies to every visitor the region-specific commands above it do not
+         cover, so the two commands together partition the world.
+
+         TRADEOFF: the rest-of-world default is a deliberate, documented
+         decision. US visitors are measured without an opt-in step, which is
+         what a consent-mode deployment outside the EEA normally does, while
+         EEA/UK/CH visitors get strictly prior consent. A visitor in ANY region
+         can still decline via the banner, which calls
+         gtag('consent', 'update', ... ) and takes effect immediately. -->
+    <script>
+      // ── Production-host gate ────────────────────────────────────────────────
+      // The tag is loaded ONLY on the live storefront. A Vercel project serves
+      // this same build on a fresh `*.vercel.app` URL for every preview and
+      // deployment, and those public URLs were being picked up by Google Search
+      // Console, Bing and Microsoft Clarity (which recorded HeadlessChrome bot
+      // sessions against them). Gating the LOADER here - not merely the `config`
+      // command - means the tag never even initializes off the production host.
+      // The host list is mirrored in `shared/production-host.ts` and asserted by
+      // the test suite.
+      (function () {
+        var host = location.hostname;
+        var isProd = host === 'www.petparcel.store' || host === 'petparcel.store';
+        if (!isProd) {
+          // A non-production host must never be indexed. The static shell ships
+          // an `index,follow` robots meta, so it is rewritten here; the
+          // `X-Robots-Tag` response header covers crawlers that do not run JS.
+          var applyNoindex = function () {
+            var r = document.querySelector('meta[name="robots"]');
+            if (r) {
+              r.setAttribute('content', 'noindex,nofollow');
+            } else {
+              var m = document.createElement('meta');
+              m.setAttribute('name', 'robots');
+              m.setAttribute('content', 'noindex,nofollow');
+              document.head.appendChild(m);
+            }
+          };
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyNoindex);
+          } else {
+            applyNoindex();
+          }
+          return;
+        }
+
+        // Load the Google tag (gtag.js) only now that the host is known good.
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZYJNEHXX7Z';
+        document.head.appendChild(s);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ window.dataLayer.push(arguments); }
+        window.gtag = gtag;
+        gtag('js', new Date());
+
+        // 1. EEA + UK + Switzerland: opt-in required, so storage starts DENIED.
+        //    `functionality_storage` and `security_storage` are not optional and
+        //    stay granted everywhere. `wait_for_update` gives the banner a short
+        //    window to restore a previous choice before the first hit fires.
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+          functionality_storage: 'granted',
+          security_storage: 'granted',
+          wait_for_update: 500,
+          region: ["AT","BE","BG","CH","CY","CZ","DE","DK","EE","ES","FI","FR","GB","GG","GR","HR","HU","IE","IM","IS","IT","JE","LI","LT","LU","LV","MT","NL","NO","PL","PT","RO","SE","SI","SK"]
+        });
+
+        // 2. Everywhere else (the store's main US audience): GRANTED, so GA4
+        //    records normal, cookieless-free measurement by default. Still
+        //    overridable per visitor by the banner below.
+        gtag('consent', 'default', {
+          ad_storage: 'granted',
+          ad_user_data: 'granted',
+          ad_personalization: 'granted',
+          analytics_storage: 'granted',
+          functionality_storage: 'granted',
+          security_storage: 'granted',
+          wait_for_update: 500
+        });
+
+        // Only now is a consent state established, so the config command can run.
+        gtag('config', 'G-ZYJNEHXX7Z');
+
+        // 3. Re-apply a RETURNING visitor's own decision BEFORE the first hit.
+        //    The decision is mirrored to a first-party cookie by
+        //    `lib/analytics.ts` precisely so it can be read here, synchronously,
+        //    in an inline script that runs before any bundle or React has loaded.
+        //    Without this an EEA visitor who had already accepted would have their
+        //    new session start on the denied default and only be corrected later.
+        (function () {
+          try {
+            var m = document.cookie.match(/(?:^|;\s*)pp_consent=([^;]*)/);
+            if (!m) return;
+            var saved = JSON.parse(decodeURIComponent(m[1]));
+            var pick = function (v) { return v === 'granted' ? 'granted' : 'denied'; };
+            gtag('consent', 'update', {
+              ad_storage: pick(saved.ad_storage),
+              ad_user_data: pick(saved.ad_user_data),
+              ad_personalization: pick(saved.ad_personalization),
+              analytics_storage: pick(saved.analytics_storage),
+              functionality_storage: 'granted',
+              security_storage: 'granted'
+            });
+          } catch (e) {
+            /* No stored decision, or it was unreadable: the defaults above stand
+               and the consent banner will ask. */
+          }
+        })();
+
+        // The stored choice has now been applied, so the cookie has served its
+        // single purpose. Clearing it here means it is never read back twice (the
+        // banner and the analytics helper both read localStorage), and no consent
+        // record is left sitting in a request header.
+        document.cookie = 'pp_consent=; Path=/; Max-Age=0; SameSite=Lax';
+      })();
+    </script>
+
+    <!-- Microsoft Clarity - session recordings and heatmaps. Placed in <head>
+         so the tag is present on every page of the app. The inline snippet is
+         pinned by sha256 in the Content-Security-Policy (see
+         server/_core/security-headers.ts), and the clarity.ms hosts it loads
+         from and beacons to are allow-listed there too. -->
+    <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        // Production-host gate: Clarity must never record a preview deployment
+        // or a local run. Mirrors `shared/production-host.ts`.
+        if (l.location.hostname !== "www.petparcel.store" && l.location.hostname !== "petparcel.store") return;
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yy21hlsr6z");
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eb3594" />
+    <!-- Primary US-market SEO. Per-route tags (title, description, canonical,
+         Open Graph, Twitter cards, JSON-LD) are set at runtime by useSeo(). -->
+    <title>PetParcel - Pet Supplies for Dogs, Cats and More, Shipped Across the USA</title>
+    <meta
+      name="description"
+      content="Shop pet supplies for dogs, cats, birds, fish and small pets at PetParcel - food, beds, crates, harnesses, toys, grooming and more. Fast, tracked shipping across the USA and 30-day returns."
+    />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="author" content="PetParcel" />
+    <meta name="geo.region" content="US" />
+    <!-- Bing Webmaster Tools site verification. This tag must stay in the
+         document head PERMANENTLY - Bing re-checks it to keep the site
+         verified, so removing it revokes verification. It lives in the static
+         shell, which the server sends for every route (see
+         server/_core/ssr-meta.ts), so it is present site-wide and not only on
+         the home page. It is a plain <meta>, so it needs no CSP allowance. -->
+    <meta name="msvalidate.01" content="2D2F8A4755734D76AF417F492E8D6DB9" />
+    <link rel="canonical" href="https://www.petparcel.store/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PetParcel" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="PetParcel - Pet Supplies for Dogs, Cats &amp; More" />
+    <meta
+      property="og:description"
+      content="Pet supplies for dogs, cats, birds, fish and small pets - food, beds, crates, harnesses, toys, grooming and more, shipped fast and tracked across the USA."
+    />
+    <meta property="og:url" content="https://www.petparcel.store/" />
+    <meta property="og:image" content="https://www.petparcel.store/hero.png" />
+    <meta property="og:image:alt" content="A happy golden retriever and cat with PetParcel products" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PetParcel - Pet Supplies for Dogs, Cats &amp; More" />
+    <meta
+      name="twitter:description"
+      content="Pet supplies for dogs, cats, birds, fish and small pets - food, beds, crates, harnesses, toys, grooming and more. Fast, tracked US shipping and 30-day returns."
+    />
+    <meta name="twitter:image" content="https://www.petparcel.store/hero.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/hero.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Warm the connection to the product-image CDN while the document parses,
+         so the hero and first product tiles start sooner. crossorigin is required
+         for a cross-origin image fetch. -->
+    <link rel="preconnect" href="https://media.petparcel.store" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Organization + WebSite structured data. Product/Breadcrumb/FAQ schema is
+         injected per page by useSeo({ jsonLd }). -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.petparcel.store/#organization",
+            "name": "PetParcel",
+            "url": "https://www.petparcel.store",
+            "logo": "https://www.petparcel.store/hero.png",
+            "email": "support@petparcel.store",
+            "telephone": "+1-800-555-0142",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1200 Market St",
+              "addressLocality": "Wilmington",
+              "addressRegion": "DE",
+              "postalCode": "19801",
+              "addressCountry": "US"
+            },
+            "areaServed": { "@type": "Country", "name": "United States" }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.petparcel.store/#website",
+            "url": "https://www.petparcel.store",
+            "name": "PetParcel",
+            "inLanguage": "en-US",
+            "publisher": { "@id": "https://www.petparcel.store/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.petparcel.store/shop?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "OnlineStore",
+            "@id": "https://www.petparcel.store/#store",
+            "name": "PetParcel",
+            "url": "https://www.petparcel.store",
+            "image": "https://www.petparcel.store/hero.png",
+            "priceRange": "$5-$199",
+            "currenciesAccepted": "USD",
+            "paymentAccepted": "Credit Card, Debit Card",
+            "parentOrganization": { "@id": "https://www.petparcel.store/#organization" }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

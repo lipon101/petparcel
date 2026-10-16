@@ -1,0 +1,29 @@
+-- The SUPPLIER'S OWN option dimensions, stored per product.
+--
+-- WHY THIS EXISTS. The buy box had only the variant LABELS to work from, so it
+-- had to infer what each option row WAS. For most products the labels say enough
+-- ("S . Military Green"), but three real shapes defeat inference:
+--
+--   * A product whose real listing states `Set` or `QTY` and carries ONE value -
+--     the 2-pack shower brush's real option is `2pcs`, the senior-dog tablets'
+--     is `1box`, the doggles' is `1pack`. With nothing but the value the page
+--     could not name the row, so it fell back to a vague "Option", which reads
+--     as a placeholder even though the value is genuinely the supplier's.
+--   * A product whose real listing has NO options at all - the 2-tier cat condo
+--     and the grooming scissors both list `Default Title`. Those must say the
+--     product comes in one configuration rather than draw a chooser.
+--   * A product whose dimension token the supplier writes as an internal code
+--     (`CJ7KHPLFMSHY`), which is not a word a shopper can read.
+--
+-- The supplier's product endpoint states all of this itself, in `productKeyEn`
+-- ("COLOR-SIZE", "QTY", "Set") / `productKey`. Storing it on the product lets the
+-- buy box use the supplier's OWN headings ("Colour", "Size", "Pack", "Set")
+-- instead of inventing one, and lets a single-option listing name its row.
+--
+-- The parsed array holds one object per dimension: {token, kind, label}. An EMPTY
+-- array is meaningful - it is the supplier's own statement that the product has
+-- no options - which is distinct from NULL, meaning "not fetched yet".
+--
+-- IDEMPOTENT: guarded with IF NOT EXISTS, so a re-run converges.
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "option_dimensions" jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cj_option_schema" text;

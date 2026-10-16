@@ -1,0 +1,21 @@
+-- Add an `archived` flag so deleting a product that has ORDER HISTORY is a
+-- reversible archive rather than a destructive erase.
+--
+-- WHY THIS EXISTS. The admin panel's Delete used to hard-delete the row. That is
+-- safe for a product nobody has bought - its variants, reviews and wishlist
+-- entries cascade away and nothing is lost. But `order_items.product_id` is
+-- ON DELETE SET NULL, so hard-deleting a product a customer actually ordered
+-- blanks the link from that placed order back to the product it was for. The
+-- deploy-time catalog sync already refuses to prune an order-referenced product
+-- for exactly this reason; the admin Delete did not, so the two disagreed.
+--
+-- WHAT IT DOES. Adds a boolean `archived` column (default false). `deleteProduct`
+-- in server/db.ts now ARCHIVES a product that has order lines (sets
+-- `archived = true, active = false`) and hard-deletes one that has none. An
+-- archived product is excluded from every storefront read AND from the admin
+-- list, so it is gone from the owner's point of view, while the row - and the
+-- order's link to it - survives and can be restored.
+--
+-- Idempotent: `IF NOT EXISTS` means a re-run is a no-op.
+
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "archived" boolean NOT NULL DEFAULT false;
