@@ -1,0 +1,9 @@
+# PetParcel security contact (RFC 9116).
+# Report a vulnerability or a security concern to the address below. Please
+# include enough detail to reproduce the issue; we acknowledge every report.
+Contact: mailto:support@petparcel.store
+Contact: https://www.petparcel.store/contact
+Expires: 2027-10-14T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://www.petparcel.store/.well-known/security.txt
+Policy: https://www.petparcel.store/privacy

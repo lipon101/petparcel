@@ -1,0 +1,18 @@
+# Normalise every text file to LF, in the repository AND in the working tree.
+#
+# WHY THIS EXISTS. The Content-Security-Policy pins the sha256 of the inline
+# tag snippets in `client/index.html` (see server/_core/security-headers.ts),
+# and the deployed document is built from the REPOSITORY bytes. Git's
+# `core.autocrlf=true` - the default on Windows - rewrites LF to CRLF in the
+# working tree, so a checkout on Windows computes a DIFFERENT hash for the very
+# same snippet, the policy no longer matches what ships, and the test that
+# guards the pair fails on one platform only. The same drift made two suites
+# that read a source file as text (and search it for "\n") fail on Windows only.
+#
+# So the line endings are pinned here, for every platform, instead of being left
+# to each developer's git configuration.
+#
+# `text=auto` lets Git detect binary files and leave them alone (the PNGs and
+# the bundled `api/index.js` stay byte-for-byte identical); `eol=lf` makes the
+# working tree match the repository everywhere.
+* text=auto eol=lf

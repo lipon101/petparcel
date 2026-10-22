@@ -1,0 +1,4197 @@
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ============================================================================
+   PetParcel design system.
+
+   Structure and rhythm follow the reference storefront (rupanjali.com): a
+   three-row header, a soft ground, product cards with a square image well, a
+   small tracked category label, a coloured price line and a round add-to-cart
+   button.
+
+   The system itself is deliberate and tight:
+     · Type  - Libre Baskerville (a high-contrast transitional serif) for all
+               display and heading text, Inter (a neutral grotesque) for body
+               and UI. Two families, no more. Libre Baskerville sets wide, so
+               every heading size below is tuned down and re-tracked for it.
+     · Colour - the reference's warm rose system: brand pink #EB3594 as the
+               identity accent, #D24862 as the deeper accent, on a white ground
+               with blush/cream bands and a real warm-neutral ink ramp. Every
+               surface resolves through these tokens - no stray hues.
+     · Contrast - white-on-pink text is only placed on tokens that clear
+               4.5:1 (`--primary` #D0337F = 4.71, `--navy` #B03A6E = 5.68,
+               `--navy-deep` #7E2350 = 8.70). The bright #EB3594 is reserved for
+               non-text use: focus rings, hairlines, decorative fills.
+     · Shape  - a considered radius scale (8 / 12 / 16 / 22) and layered,
+               rose-tinted shadows rather than one flat drop-shadow.
+   ========================================================================== */
+
+:root {
+  /* ---- Brand pink family ------------------------------------------------
+     #EB3594 is the brand pink (identity: focus rings, hairlines, decorative
+     fills). #D24862 is the deeper accent the brand pairs with it - emphasis,
+     prices, hover/pressed states. #D0337F is the same hue one step deeper,
+     which is what carries white text at AA (4.71:1). */
+  --pink: #eb3594;
+  --pink-dark: #d24862;
+  --pink-deep: #b03a6e;
+  --pink-soft: #fbe3ee;
+  --pink-tint: #fef3f8;
+
+  /* ---- Structural rose (dark bands, category pill, icon wells) ----
+     White clears AA on all three (5.68 / 7.26 / 8.70). */
+  --navy: #b03a6e;
+  --navy-dark: #97295c;
+  --navy-deep: #7e2350;
+  --navy-soft: #fbe3ee;
+  --navy-tint: #fef3f8;
+
+  /* ---- Accent - the confident rose that carries text (4.71 on white) ---- */
+  --orange: #d0337f;
+  --orange-dark: #b82a6f;
+  --orange-deep: #97295c;
+  --orange-soft: #fbe3ee;
+
+  /* ---- Grounds: bone white with warm blush bands (reference's own values) ---- */
+  --blush: #f8e9e7;
+  --cream: #faf3f1;
+  --footer-bg: #f9ecea;
+
+  /* ---- Warm-neutral ink ramp & hairlines ---- */
+  --ink: #1b1b1b;
+  --ink-2: #3a3a3a;
+  --gray: #6e6a6a;
+  --gray-2: #a5a0a0;
+  --line: #efe3e0;
+  --line-soft: #f6eeec;
+
+  /* ---- Quiet secondary + rating gold ---- */
+  --sage: #8a8383;
+  --gold: #c69a4e;
+  --gold-light: #dfb45f;
+
+  /* ---- Semantic ---- */
+  --green: #2e7d52;
+  --red: #c0392b;
+
+  /* ---- Elevation & shape ---- */
+  --radius: 12px;
+  --shadow-xs: 0 1px 2px rgba(158, 40, 64, 0.05);
+  --shadow-sm: 0 1px 2px rgba(158, 40, 64, 0.05), 0 4px 14px -6px rgba(158, 40, 64, 0.08);
+  --shadow: 0 2px 4px rgba(158, 40, 64, 0.05), 0 12px 30px -12px rgba(158, 40, 64, 0.14);
+  --shadow-lg: 0 4px 10px rgba(158, 40, 64, 0.06), 0 24px 50px -22px rgba(158, 40, 64, 0.2);
+  --shadow-xl: 0 40px 80px -40px rgba(158, 40, 64, 0.26);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- shadcn token surface (mapped below) ---- */
+  --background: #ffffff;
+  --foreground: #1b1b1b;
+  --card: #ffffff;
+  --card-foreground: #1b1b1b;
+  --popover: #ffffff;
+  --popover-foreground: #1b1b1b;
+  --primary: #d0337f;
+  --primary-foreground: #ffffff;
+  --secondary: #fdf1f7;
+  --secondary-foreground: #b03a6e;
+  --accent: #b03a6e;
+  --accent-foreground: #ffffff;
+  --muted: #faf3f1;
+  --muted-foreground: #6e6a6a;
+  --border: #efe3e0;
+  --input: #eadfe0;
+  --ring: #eb3594;
+  --destructive: #c0392b;
+  --destructive-foreground: #ffffff;
+  --success: #2e7d52;
+  --warning: #b07d3a;
+  --brand-ink: #7e2350;
+  --accent-soft: #fbe3ee;
+  --shadow-color: 338 55% 34%;
+  --hero-glow: #fbe3ee;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* Map tokens to Tailwind's theme so utilities (bg-primary, border-border,
+   rounded-lg, …) resolve. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand-ink: var(--brand-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-soft: var(--navy-soft);
+  --color-orange: var(--orange);
+  --color-orange-dark: var(--orange-dark);
+  --color-orange-deep: var(--orange-deep);
+  --color-orange-soft: var(--orange-soft);
+  --color-blush: var(--blush);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-line: var(--line);
+  --color-gold: var(--gold);
+  --color-pink: var(--pink);
+  --color-pink-dark: var(--pink-dark);
+  --color-pink-deep: var(--pink-deep);
+  --color-pink-soft: var(--pink-soft);
+
+  /* Legacy aliases: the storefront's older class names (teal / coral / gray /
+     line-soft) are remapped onto the rose system so every existing surface
+     resolves through the one palette instead of drifting. */
+  --color-teal: var(--navy);
+  --color-teal-soft: var(--navy-soft);
+  --color-teal-deep: var(--navy-dark);
+  --color-coral: var(--orange);
+  --color-coral-soft: var(--orange-soft);
+  --color-coral-deep: var(--orange-deep);
+  --color-gray: var(--gray);
+  --color-gray-2: var(--gray-2);
+  --color-line-soft: var(--line-soft);
+  --color-sage: var(--sage);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Libre Baskerville sets wide and has only 400 / 700. Headings use 400 at a
+     reduced size for an elegant, high-contrast look; 700 is reserved for the
+     wordmark and small emphatic runs. */
+  --font-display: "Libre Baskerville", Georgia, "Times New Roman", serif;
+
+  --shadow-xs: 0 1px 2px rgba(158, 40, 64, 0.05);
+  --shadow-sm: 0 1px 2px rgba(158, 40, 64, 0.05), 0 4px 14px -6px rgba(158, 40, 64, 0.08);
+  --shadow-md: 0 2px 4px rgba(158, 40, 64, 0.05), 0 12px 30px -12px rgba(158, 40, 64, 0.16);
+  --shadow-lg: 0 4px 10px rgba(158, 40, 64, 0.06), 0 24px 50px -22px rgba(158, 40, 64, 0.24);
+  --shadow-xl: 0 40px 80px -40px rgba(158, 40, 64, 0.32);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-padding-top: 8rem;
+    -webkit-tap-highlight-color: transparent;
+    /* Guards against the few px of horizontal bleed a wide grid or a fixed
+       panel can introduce at small widths. `clip` (not `hidden`) leaves the
+       sticky header working. */
+    overflow-x: clip;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    overflow-x: clip;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 15.5px;
+    line-height: 1.65;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    /* Libre Baskerville ships 400 and 700 only - asking for 500 would be
+       synthesised, so headings are set at 400 and left to the serif's own
+       weight. It also runs wide, hence the gentler negative tracking. */
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.22;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  ::selection {
+    background: var(--navy);
+    color: #fff;
+  }
+  @media (min-width: 1024px) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(158, 40, 64, 0.18);
+      border-radius: 9999px;
+      border: 3px solid var(--background);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(158, 40, 64, 0.32);
+    }
+  }
+}
+
+@layer components {
+  /* ==========================================================================
+     SKIP LINK  (.skip-link)
+
+     The first focusable element on every storefront page (see Layout.tsx). It
+     is off-screen until it takes keyboard focus, then slides into the top-left
+     corner as a real button, so a keyboard or screen-reader user can jump past
+     the three-row header straight to <main id="main-content">.
+
+     Hidden with a transform rather than `display:none`/`visibility:hidden`:
+     those would remove it from the tab order, which is the one thing a skip
+     link must not do. `position: fixed` keeps it out of flow so it never
+     shifts the header, and the z-index sits above the sticky nav (60) and the
+     floating back-to-top button (80) but below the consent banner (200).
+     ========================================================================== */
+  .skip-link {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 0 0 var(--radius-md) 0;
+    background: var(--navy);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-100%);
+    transition: transform 0.2s var(--ease-out-soft);
+  }
+  /* Revealed on focus. `:focus` (not only `:focus-visible`) so the link is
+     shown however it is focused, and an explicit outline because the global
+     focus ring lives in the base layer and this rule outranks it. */
+  .skip-link:focus {
+    transform: translateY(0);
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skip-link {
+      transition: none;
+    }
+  }
+
+  /* ==========================================================================
+     ADMIN SIGN-IN  (.al-*)
+
+     The management door. It is NOT a storefront page, so it does not borrow the
+     shopper chrome - but it IS part of the PetParcel brand, so every colour,
+     radius, shadow and type ramp below is taken straight from the design system
+     above rather than invented: the rose family (--pink / --orange / --navy),
+     the 8/12/16/22 radius scale, the rose-tinted elevation shadows, Libre
+     Baskerville for the wordmark and Inter for everything else.
+
+     Why a LIGHT ground: the storefront is a light, airy system, and the admin
+     door should read as a first-class part of the same brand - clean, crisp and
+     high-end - while staying unmistakably its own surface (no shopper header or
+     footer, one centred card, and the brand accent used sparingly).
+
+     Scoped with an `.al-` prefix so none of this can collide with, or leak into,
+     a storefront class. All motion is compositor-only and fully switched off
+     under `prefers-reduced-motion`.
+     ========================================================================== */
+  .al-shell {
+    position: relative;
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
+    padding: 40px 20px;
+    color: var(--ink);
+    background:
+      radial-gradient(120% 70% at 50% -20%, var(--pink-tint) 0%, transparent 62%),
+      linear-gradient(180deg, #ffffff 0%, var(--cream) 100%);
+  }
+
+  .al-card-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    animation: al-rise 0.5s var(--ease-out-soft) both;
+  }
+  /* The card: a clean white surface lifted off the tinted ground by the
+     system's rose-tinted elevation, with a single brand hairline on top. */
+  .al-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--line);
+    background: #ffffff;
+    box-shadow: var(--shadow-lg);
+    padding: 32px 30px 28px;
+  }
+  .al-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--pink) 0%, var(--orange) 100%);
+  }
+
+  /* ---- Brand lockup ------------------------------------------------------- */
+  .al-lockup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .al-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(150deg, var(--pink) 0%, var(--orange) 100%);
+    box-shadow: 0 14px 30px -14px rgba(208, 51, 127, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  .al-wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+  .al-wordmark .brand-accent {
+    color: var(--pink);
+  }
+  .al-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--pink-tint);
+    padding: 4px 11px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  .al-heading {
+    margin-top: 2px;
+    color: var(--ink);
+    font-size: clamp(20px, 3.6vw, 24px);
+    line-height: 1.2;
+  }
+  .al-sub {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--gray);
+    max-width: 30ch;
+  }
+
+  /* ---- Fields ------------------------------------------------------------- */
+  .al-field + .al-field {
+    margin-top: 16px;
+  }
+  .al-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .al-control {
+    position: relative;
+  }
+  .al-control-ic {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--gray-2);
+    pointer-events: none;
+    transition: color 0.2s var(--ease-out-soft);
+  }
+  .al-input {
+    width: 100%;
+    height: 48px;
+    border-radius: var(--radius);
+    border: 1px solid var(--input);
+    background: #ffffff;
+    padding: 0 14px 0 40px;
+    font-size: 15px;
+    color: var(--ink);
+    outline: 0;
+    transition:
+      border-color 0.2s var(--ease-out-soft),
+      box-shadow 0.2s var(--ease-out-soft),
+      background 0.2s var(--ease-out-soft);
+  }
+  .al-input::placeholder {
+    color: var(--gray-2);
+  }
+  .al-input:hover {
+    border-color: var(--gray-2);
+  }
+  /* The focus ring is the one place the bright brand pink (#eb3594) is used at
+     full strength - it is decoration, not text, so AA does not apply. */
+  .al-input:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--pink) 18%, transparent);
+  }
+  .al-input:focus ~ .al-control-ic,
+  .al-control:focus-within .al-control-ic {
+    color: var(--pink);
+  }
+  .al-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--muted);
+  }
+  .al-reveal {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--gray);
+    cursor: pointer;
+    transition: background 0.2s var(--ease-out-soft), color 0.2s var(--ease-out-soft);
+  }
+  .al-reveal:hover {
+    background: var(--secondary);
+    color: var(--ink);
+  }
+
+  /* ---- Inline error ------------------------------------------------------- */
+  .al-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 16px;
+    border-radius: var(--radius);
+    padding: 11px 13px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #a02a1e;
+    background: #fdecea;
+    border: 1px solid #f3c9c3;
+    animation: al-shake 0.32s var(--ease-out-soft) both;
+  }
+  .al-error svg {
+    flex: none;
+    margin-top: 2px;
+    color: var(--destructive);
+  }
+  /* A breached lockout is a warning, not a mistake - amber, not red. */
+  .al-error.is-locked {
+    color: #8a5a12;
+    background: #fdf4e3;
+    border-color: #f0dcb4;
+  }
+  .al-error.is-locked svg {
+    color: var(--warning);
+  }
+
+  /* ---- Submit ------------------------------------------------------------- */
+  .al-submit {
+    width: 100%;
+    margin-top: 20px;
+    letter-spacing: 0.12em;
+  }
+  .al-submit .al-spin {
+    animation: al-spin 0.7s linear infinite;
+  }
+
+  /* ---- Foot --------------------------------------------------------------- */
+  .al-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--gray);
+  }
+  .al-foot svg {
+    color: var(--gray-2);
+  }
+
+  @keyframes al-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes al-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes al-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    22% {
+      transform: translateX(-4px);
+    }
+    62% {
+      transform: translateX(4px);
+    }
+  }
+  /* Nothing moves for anyone who asked for less motion - and the card is
+     guaranteed visible, because `from` never applies. */
+  @media (prefers-reduced-motion: reduce) {
+    .al-card-wrap,
+    .al-error {
+      animation: none;
+    }
+    .al-submit .al-spin {
+      animation-duration: 2s;
+    }
+  }
+
+  /* ---------- ADMIN HEADER (.ah-*) ----------
+     The panel's top bar: brand lockup, a subtle divider, and the two action
+     controls (Back to storefront / Sign out). Scoped with an `.ah-` prefix so
+     nothing here can collide with, or leak into, the storefront. Light/white
+     premium surface, consistent with the admin sign-in card and the storefront
+     brand ramp (rose -> magenta). */
+  .ah-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+  }
+  /* Brand hairline along the top edge, matching the admin sign-in card. */
+  .ah-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, var(--pink) 0%, var(--orange) 100%);
+  }
+  .ah-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .ah-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 13px;
+    color: #fff;
+    background: linear-gradient(150deg, var(--pink) 0%, var(--orange) 100%);
+    box-shadow: 0 10px 22px -12px rgba(208, 51, 127, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  .ah-lockup {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.15;
+  }
+  .ah-wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+  .ah-wordmark .brand-accent {
+    color: var(--pink);
+  }
+  .ah-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .ah-divider {
+    width: 1px;
+    align-self: stretch;
+    min-height: 28px;
+    background: var(--line);
+  }
+  .ah-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .ah-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ah-btn svg {
+    flex: none;
+  }
+  .ah-btn:hover {
+    background: var(--secondary);
+    color: var(--foreground);
+  }
+  .ah-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--pink);
+  }
+  .ah-btn--outline {
+    border-color: var(--input);
+    background: #fff;
+    color: var(--foreground);
+  }
+  .ah-btn--outline:hover {
+    background: var(--secondary);
+    border-color: var(--pink-soft);
+  }
+  .ah-btn--signout:hover {
+    background: var(--pink-tint);
+    color: var(--pink-deep);
+  }
+  /* On a phone the labels collapse to icons so the bar never overflows; the
+     controls keep a comfortable 40px tap target and an accessible label. */
+  @media (max-width: 600px) {
+    .ah-bar {
+      gap: 10px;
+      padding: 10px 12px;
+    }
+    .ah-btn {
+      padding: 0 12px;
+    }
+    .ah-btn .ah-label {
+      display: none;
+    }
+    .ah-divider {
+      display: none;
+    }
+  }
+
+  /* ---------- Admin dashboard body ----------
+     The panel's landing surface. Scoped with a `.dash-` prefix so nothing here
+     can collide with, or leak into, the storefront. Light/white premium surface
+     on the same brand ramp (rose -> magenta) as the header and sign-in card. */
+  .dash-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Dashboard canvas: a soft brand ground so the frosted cards have
+        something to blur. Falls back to the plain page background wherever
+        backdrop-filter is unsupported. ─────────────────────────────────── */
+  .dash-canvas {
+    position: relative;
+    padding: 20px;
+    margin: -20px;
+    border-radius: 24px;
+    background:
+      radial-gradient(1100px 380px at 8% -10%, rgba(235, 53, 148, 0.10), transparent 60%),
+      radial-gradient(900px 420px at 100% 0%, rgba(208, 51, 127, 0.08), transparent 55%),
+      linear-gradient(180deg, var(--cream) 0%, #fff 55%);
+  }
+  /* Frosted translucent surfaces for every card on the dashboard body. */
+  .dash-canvas .card-soft,
+  .dash-canvas .dash-hero,
+  .dash-canvas .dash-attn {
+    background: rgba(255, 255, 255, 0.66);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+    border-color: rgba(255, 255, 255, 0.72);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 10px 30px -12px rgba(20, 16, 38, 0.16);
+  }
+  .dash-canvas .card-soft {
+    transition: box-shadow 200ms ease, transform 200ms ease;
+  }
+  .dash-canvas .card-soft:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 16px 40px -14px rgba(20, 16, 38, 0.22);
+  }
+  /* Legibility must never depend on the frost - the figures keep full contrast. */
+  .dash-canvas .dash-hero-value,
+  .dash-canvas .dash-attn-value {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-hero-badge-num {
+    font-variant-numeric: tabular-nums;
+  }
+  /* A soft brand wash in the corner - decorative, so it never affects layout. */
+  .dash-hero::after {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--pink-tint) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .dash-hero-top {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .dash-hero-label {
+    position: relative;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    /* The hero sits on a pink tint, where the shared muted token washes out
+       (it was picked for a white card). A pink-deep label keeps its contrast
+       on the tint without depending on the frost behind it. */
+    color: var(--pink-deep);
+    opacity: 0.92;
+  }
+  .dash-hero-badge-num {
+    position: relative;
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-hero-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    /* A SOLID ink pill, not a pink tint. The previous pink-on-pink fill sat on a
+       frosted, pink-washed canvas and read as a blur: the badge is a headline
+       figure an owner reads at a glance, so it is now rendered at full contrast
+       with no translucency for the frost behind it to wash out. */
+    background: var(--ink);
+    color: #fff;
+    border: 1px solid var(--ink);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(20, 16, 38, 0.22);
+  }
+  /* The icon and figure inside the pill stay crisp white on the ink fill. */
+  .dash-hero-badge svg {
+    color: #fff;
+  }
+  .dash-hero-value {
+    position: relative;
+    margin-top: 10px;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 6vw, 44px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  /* The 30-day comparison line under the hero figure: a coloured delta chip plus
+     the two real window totals. */
+  .dash-hero-delta {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--ink);
+    opacity: 0.8;
+  }
+  .dash-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-delta--up {
+    background: #e7f6ee;
+    color: #1c7a4a;
+  }
+  .dash-delta--down {
+    background: #fdecea;
+    color: #a02a1e;
+  }
+  .dash-hero-delta-note {
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-hero-foot {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink);
+    opacity: 0.78;
+  }
+  .dash-hero-foot strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .dash-hero-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+  /* The "needs a human" strip: three linked tiles, each a whole-row tap target. */
+  .dash-attn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .dash-attn:hover {
+    border-color: var(--pink-soft);
+    box-shadow: var(--shadow-md, var(--shadow-sm));
+    transform: translateY(-1px);
+  }
+  .dash-attn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--pink);
+  }
+  .dash-attn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 11px;
+  }
+  .dash-attn-icon--amber {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  .dash-attn-icon--rose {
+    /* Same fix as the hero badge: a solid, saturated brand tile instead of a
+       pale pink-on-pink wash, so the icon reads sharply on the frosted card. */
+    background: var(--pink-deep);
+    color: #fff;
+  }
+  .dash-attn-value {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-attn-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+  }
+
+  /* ---------- Layout ---------- */
+  .container-page {
+    width: min(1200px, 92%);
+    margin-inline: auto;
+  }
+  @media (max-width: 860px) {
+    .container-page {
+      width: 94%;
+    }
+  }
+
+  .section {
+    /* Tightened from 64px: the reference reads as one dense page rather than a
+       stack of airy bands. Pages that want more breathing room say so with a
+       `!pt-*` / `!pb-*` utility. */
+    padding: 44px 0;
+  }
+  .sec-bg-soft {
+    background: var(--blush);
+    border-radius: 22px;
+    margin: 8px auto;
+  }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 34px;
+  }
+  .eyebrow {
+    display: block;
+    color: var(--orange);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.8px;
+    text-transform: uppercase;
+    margin-bottom: 9px;
+  }
+  .section-title {
+    /* Sized down and re-tracked for Libre Baskerville, which sets noticeably
+       wider than the sans it replaces - at the sans scale these overflowed. */
+    font-size: clamp(22px, 2.7vw, 30px);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.008em;
+  }
+  .view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink);
+    padding-bottom: 3px;
+    border-bottom: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .view-all:hover {
+    color: var(--orange);
+    border-color: var(--orange);
+  }
+
+  /* ---------- Surfaces ---------- */
+  .card-soft {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-premium {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s var(--ease-out-soft), transform 0.3s var(--ease-out-soft),
+      border-color 0.3s var(--ease-out-soft);
+  }
+  .card-premium:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--navy) 22%, var(--line));
+  }
+  /* Clean, flat grounds - no decorative radial gradients. */
+  .surface-mesh {
+    background: linear-gradient(180deg, var(--blush) 0%, var(--background) 100%);
+  }
+  .surface-cream {
+    background: var(--cream);
+  }
+  .surface-ink {
+    background: var(--navy-deep);
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] text-[12px] font-semibold uppercase tracking-[0.1em] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+  .btn-primary {
+    @apply bg-primary text-primary-foreground;
+    box-shadow: 0 1px 2px rgba(158, 40, 64, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .btn-primary:hover {
+    background: var(--navy-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -6px rgba(158, 40, 64, 0.42);
+  }
+  .btn-accent {
+    @apply bg-accent text-accent-foreground;
+    box-shadow: 0 1px 2px rgba(208, 51, 127, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  .btn-accent:hover {
+    background: var(--orange-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -6px rgba(208, 51, 127, 0.46);
+  }
+  .btn-ink {
+    @apply bg-foreground text-background;
+  }
+  .btn-ink:hover {
+    background: var(--navy);
+  }
+  .btn-outline {
+    @apply border border-foreground/20 bg-transparent text-foreground;
+  }
+  .btn-outline:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-ghost {
+    @apply text-foreground;
+  }
+  .btn-ghost:hover {
+    background: var(--muted);
+  }
+  /* Wishlist toggle. Both states keep the label AND the heart icon visible and
+     legible: the resting state is a quiet outline, the saved state flips to a
+     solid coral fill with white text, so contrast never drops out. */
+  .btn-wish {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+  }
+  .btn-wish:hover {
+    border-color: var(--coral, var(--orange));
+    color: var(--coral, var(--orange));
+  }
+  .btn-wish-on,
+  .btn-wish-on:hover {
+    border-color: var(--coral, var(--orange));
+    background: var(--coral, var(--orange));
+    color: #fff;
+  }
+  /* Top utility strip: one premium one-line announcement with a leading icon,
+     replacing the stray "USD $" fragment and m-dash copy. */
+  .hd-top-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 68vw;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(255, 255, 255, 0.94);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .hd-top-ic {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    /* White so the icon reads clearly against the dark strip background, and
+       inherits the same colour as the announcement text beside it. */
+    color: #fff;
+    stroke: #fff;
+  }
+  .btn-sm {
+    @apply h-9 px-4 text-[11px];
+  }
+  .btn-md {
+    @apply h-11 px-6;
+  }
+  .btn-lg {
+    @apply h-12 px-8 text-[12.5px];
+  }
+  /* ---------- Hero calls to action ----------
+     One clear hierarchy: a solid accent primary whose arrow nudges forward on
+     hover, and a quiet outline secondary that fills with ink. Both keep a
+     generous 52px tap height so they stay comfortable on a phone. */
+  .btn-hero {
+    @apply h-[52px] px-8 tracking-[0.12em];
+  }
+  .btn-hero-primary svg {
+    transition: transform 0.3s var(--ease-out-soft);
+  }
+  .btn-hero-primary:hover svg {
+    transform: translateX(3px);
+  }
+  .btn-hero-secondary:hover {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+
+  /* ---------- Header ---------- */
+  .hd-top {
+    background: var(--navy-deep);
+    color: rgba(255, 255, 255, 0.84);
+    font-size: 12px;
+  }
+  .hd-top-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 38px;
+    flex-wrap: wrap;
+    /* A flex item defaults to min-width:auto, so a nowrap child (the
+       announcement) would force this row wider than the viewport. min-width:0
+       lets the row shrink and the announcement ellipsize instead. */
+    min-width: 0;
+  }
+  .hd-top-left,
+  .hd-top-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  /* The announcement side takes the free space and may shrink below its text
+     width, which is what lets `.hd-top-line`'s ellipsis actually engage. */
+  .hd-top-left {
+    flex: 1 1 auto;
+  }
+  .hd-top-item {
+    letter-spacing: 0.4px;
+    transition: color 0.2s;
+  }
+  .hd-top a.hd-top-item:hover {
+    color: #fff;
+  }
+  .hd-socials {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hd-socials a:hover {
+    color: #fff;
+  }
+
+  /* The main bar owns a stacking context ABOVE the sticky nav (z-60) so its
+     dropdowns always paint on top, and BELOW the mini-cart (z-70) and mobile
+     drawer (z-80) so those still cover it. */
+  .hd-main {
+    background: #fff;
+    position: relative;
+    z-index: 65;
+  }
+  .hd-main-in {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 16px 0;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    flex: none;
+  }
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--navy-soft);
+    color: var(--navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .brand-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 23px;
+    letter-spacing: -0.012em;
+    color: var(--navy-deep);
+  }
+  .brand-name .brand-accent {
+    color: var(--orange);
+  }
+  .brand-sub {
+    font-size: 8px;
+    letter-spacing: 4.2px;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-top: 3px;
+  }
+  .hd-search {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 620px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .hd-search:focus-within {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--navy) 12%, transparent);
+  }
+  .hd-search input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    padding: 12px 18px;
+    font-size: 14px;
+    background: transparent;
+    color: var(--ink);
+    min-width: 0;
+  }
+  .hd-search-cat {
+    border-left: 1px solid var(--line);
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+  }
+  /* Category control. This used to be a native <select>, which cannot render an
+     icon beside each option - every browser drops markup inside <option> - so it
+     is now a button that opens a real listbox. The button matches the pill it
+     sits in: same 12px vertical padding, so the search bar's height is set by
+     the text input exactly as before. */
+  .hd-cat-trigger {
+    display: inline-flex;
+    align-items: center;
+    align-self: stretch;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 0 12px 0 14px;
+    max-width: 210px;
+    transition: color 0.2s;
+  }
+  .hd-cat-trigger:hover {
+    color: var(--navy);
+  }
+  .hd-cat-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hd-cat-ic {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: var(--navy);
+  }
+  .hd-cat-caret {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--gray);
+    transition: transform 0.22s ease;
+  }
+  .hd-cat-caret.open {
+    transform: rotate(180deg);
+  }
+  /* The menu hangs BELOW the pill. A native <select> drew pages outside the
+     document flow; this one is a real element, so it has to escape `.hd-search`
+     (which clips its children to the pill's rounded border) to be visible. */
+  .hd-search-wrap {
+    display: flex;
+    flex: 1;
+    max-width: 620px;
+    position: relative;
+  }
+  .hd-search-wrap .hd-search {
+    flex: 1;
+    max-width: none;
+  }
+  .hd-cat-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 70;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    max-height: min(70vh, 380px);
+    overflow-y: auto;
+    animation: catMenuIn 0.16s ease-out;
+  }
+  /* Two even columns of options. The panel is as wide as the search pill, so a
+     single column of nine rows would be taller than the viewport; splitting it
+     keeps every row at the same height and the whole list on screen. The "all"
+     row is a grid ITEM spanning both columns rather than a ninth cell, because
+     nine cells across two columns leave an empty half-cell dangling. */
+  .hd-cat-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  @keyframes catMenuIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .hd-cat-opt {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s;
+  }
+  .hd-cat-opt:hover,
+  .hd-cat-opt:focus-visible {
+    background: var(--navy-soft);
+    color: var(--navy-dark);
+    outline: none;
+  }
+  .hd-cat-opt:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--navy) 35%, transparent);
+  }
+  .hd-cat-opt.is-active {
+    background: var(--navy-soft);
+    color: var(--navy-dark);
+    font-weight: 600;
+  }
+  /* The row that leads on to the complete list, spanning both columns above the
+     options and set apart by a rule and a lighter weight, so it reads as
+     navigation rather than one more aisle. */
+  .hd-cat-all {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  /* Below the pill's comfortable width the two columns would truncate longer
+     aisle names, so the menu folds back to a single column and scrolls inside
+     `max-height` instead. The row height and icon size are untouched. */
+  @media (max-width: 560px) {
+    .hd-cat-list {
+      grid-template-columns: 1fr;
+    }
+  }
+  /* Scoped to the submit control on purpose. A bare `.hd-search button` also
+     matched the category trigger and painted it as a solid brand block with
+     18px of side padding. */
+  .hd-search button[type="submit"] {
+    border: 0;
+    background: var(--navy);
+    color: #fff;
+    padding: 0 18px;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .hd-search button[type="submit"]:hover {
+    background: var(--navy-dark);
+  }
+  .hd-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+  /* Action controls share ONE box shape so an icon-only item and an icon+caret
+     item sit on exactly the same baseline instead of drifting. `display:flex`
+     (not inline-flex) removes the inline-baseline gap that pushed Support off
+     the row. */
+  .hd-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 58px;
+    height: 46px;
+    padding: 0 8px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--ink);
+    transition: color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .hd-action:hover,
+  .hd-action[aria-expanded="true"] {
+    color: var(--orange);
+    background: var(--orange-soft);
+  }
+  /* Icon + its caret are one inline row; the caret no longer stacks a third
+     row under the label. */
+  .hd-action-ic {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 0;
+  }
+  .hd-action-caret {
+    width: 12px;
+    height: 12px;
+    opacity: 0.55;
+    transition: transform 0.2s var(--ease-out-soft);
+  }
+  .hd-action[aria-expanded="true"] .hd-action-caret {
+    transform: rotate(180deg);
+    opacity: 0.9;
+  }
+  /* Dropdown panels must clear the sticky nav (z-60) and any product card. */
+  .hd-dropdown {
+    z-index: 200;
+  }
+  .hd-cart-count {
+    position: absolute;
+    top: -7px;
+    right: -10px;
+    background: var(--orange);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 0 0 2px #fff;
+  }
+  /* The free-shipping meter, drawn inside the cart badge's own icon box so the
+     message that already lives on the cart page, the cart drawer and checkout is
+     visible from the header without opening the panel. Anchored just below the
+     21px bag icon and centred on the icon's vertical axis, so the action keeps its
+     exact box and the header layout is unchanged. Decorative only - the same
+     message travels on the button's aria-label for assistive tech. */
+  .hd-cart-progress {
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 21px;
+    height: 3px;
+    transform: translateX(-50%);
+    background: var(--navy-soft);
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1.5px #fff;
+  }
+  .hd-cart-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    transition: width 0.4s var(--ease-out-soft);
+  }
+  .hd-burger {
+    display: none;
+    color: var(--ink);
+  }
+
+  .hd-nav {
+    border-top: 1px solid var(--line-soft);
+    background: #fff;
+  }
+  .hd-nav-in {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    min-height: 48px;
+  }
+  .hd-menu {
+    display: flex;
+    align-items: center;
+    gap: 27px;
+  }
+  .hd-link {
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink);
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+  .hd-link:hover,
+  .hd-link.active {
+    color: var(--orange);
+  }
+  .hd-cats {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    flex: none;
+  }
+  /* ---------- Auth buttons ---------- */
+  /* The Google mark must keep its own colours (Google's brand terms), so it
+     never inherits the button's text colour, and it is sized in `em` so it
+     tracks the label whatever the type scale. */
+  .auth-google {
+    gap: 0.6rem;
+  }
+  .auth-google-mark {
+    width: 1.05em;
+    height: 1.05em;
+    flex: none;
+  }
+  /* An icon inside a labelled button: aligned to the cap height rather than the
+     baseline, so the pair looks deliberate at every size. */
+  .auth-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .auth-btn-icon svg {
+    width: 1.05em;
+    height: 1.05em;
+  }
+  .auth-or {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+  .auth-or-line {
+    height: 1px;
+    flex: 1;
+    background: var(--line);
+  }
+  .auth-or-text {
+    text-transform: lowercase;
+  }
+
+  .hd-cats:hover {
+    background: var(--navy-dark);
+  }
+  /* ---------- Curated "Browse categories" mega-menu ---------- */
+  /* Not a list of everything: a handful of aisles (see shared/nav-curation.ts),
+     each with the few subcategories worth naming, and a foot that hands the full
+     tree to the shop page. The width is capped against the viewport so the panel
+     can never be wider than the screen it opens on. */
+  .hd-mega {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    width: min(760px, calc(100vw - 32px));
+    max-height: min(70vh, 540px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 18px;
+  }
+  .hd-mega-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 22px;
+  }
+  .hd-mega-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+  .hd-mega-head:hover {
+    color: var(--orange);
+  }
+  .hd-mega-count {
+    flex: none;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--gray);
+    background: var(--line-soft);
+    border-radius: 999px;
+    padding: 1px 7px;
+  }
+  .hd-mega-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 9px;
+  }
+  .hd-mega-sub a {
+    font-size: 13px;
+    color: var(--gray);
+    transition: color 0.2s;
+    /* Long supplier names ("Pet Training and Educational Toys") wrap rather than
+       stretching the column past its track. */
+    overflow-wrap: anywhere;
+  }
+  .hd-mega-sub a:hover {
+    color: var(--orange);
+  }
+  .hd-mega-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .hd-mega-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--orange);
+    transition: opacity 0.2s;
+  }
+  .hd-mega-all:hover {
+    opacity: 0.75;
+  }
+  .hd-mega-note {
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+  .hd-nav-right {
+    margin-left: auto;
+  }
+
+  .hd-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    box-shadow: var(--shadow-sm);
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: saturate(150%) blur(12px);
+    -webkit-backdrop-filter: saturate(150%) blur(12px);
+  }
+
+  /* ---------- Product card ---------- */
+  .p-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--line-soft);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.28s var(--ease-out-soft), box-shadow 0.28s var(--ease-out-soft),
+      border-color 0.28s var(--ease-out-soft);
+  }
+  .p-card:hover {
+    border-color: color-mix(in oklab, var(--orange) 30%, var(--line));
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px);
+  }
+  .p-media {
+    position: relative;
+    overflow: hidden;
+    background: var(--blush);
+    aspect-ratio: 1 / 1;
+  }
+  .p-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .p-card:hover .p-media img {
+    transform: scale(1.06);
+  }
+  .p-body {
+    padding: 13px 15px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .p-cat {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sage);
+    transition: color 0.2s;
+  }
+  .p-cat:hover {
+    color: var(--orange);
+  }
+  .p-name {
+    font-size: 15.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+    transition: color 0.2s;
+  }
+  .p-name a:hover {
+    color: var(--navy);
+  }
+  .p-price {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .price-now {
+    color: var(--orange);
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .price-was {
+    color: var(--gray-2);
+    text-decoration: line-through;
+    font-size: 14.5px;
+  }
+  .p-bottom {
+    margin-top: auto;
+    padding-top: 10px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .p-cartbtn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--orange-soft);
+    color: var(--orange-deep);
+    border: 1.5px solid color-mix(in oklab, var(--orange) 30%, #fff);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex: none;
+  }
+  .p-cartbtn:hover {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+    transform: scale(1.08);
+  }
+  .heart-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .heart-btn:hover {
+    transform: scale(1.1);
+    color: var(--orange);
+  }
+  .badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 5px 11px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--orange);
+  }
+  .badge-best {
+    background: var(--navy);
+  }
+  .badge-new {
+    background: var(--orange-deep);
+  }
+  .badge-sale {
+    background: var(--orange);
+  }
+  .badge-out {
+    background: var(--gray);
+  }
+  .p-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stars {
+    display: inline-flex;
+    gap: 1.5px;
+  }
+  .star {
+    fill: #ece3e6;
+  }
+  .star.filled {
+    fill: var(--gold-light);
+  }
+  .rating-count {
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+  }
+
+  /* ---------- Category roundels ---------- */
+  /* The featured aisles as an evenly-spaced rail. Every tile is the SAME fixed
+     width and every ring the same size, so the circles are uniform and the gaps
+     even on every screen - that symmetry is what reads as premium, and it is why
+     the tiles are a fixed size rather than each hugging its own label. The ring
+     is a square that never squashes (`aspect-ratio`), so it stays a true circle
+     at any width and two long-named tiles can never overlap each other.
+
+     The rail wraps rather than scrolls: `justify-content: center` keeps a partial
+     last row centred under the full rows above it, so the block stays balanced
+     instead of leaving a ragged orphan tile hugging the left edge. */
+  .cat-circles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px 20px;
+    padding: 38px 0 8px;
+  }
+  /* Columns share one width, so long and short names line up on a common axis
+     rather than each tile hugging its own label - that symmetry is the whole
+     point of the rail. */
+  .cat-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 11px;
+    text-align: center;
+    flex: 0 0 100px;
+  }
+  .cat-circle-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 84px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fdf3f6 0%, var(--blush) 100%);
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(176, 58, 110, 0.06);
+    color: var(--navy);
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease,
+      background 0.22s ease;
+  }
+  /* Icon scales WITH the ring instead of being a fixed pixel box, so the mark
+     stays optically centred as the circle shrinks on a phone. */
+  .cat-circle-ic {
+    width: 36%;
+    height: 36%;
+    max-width: 30px;
+    max-height: 30px;
+  }
+  /* One centred line, clipped with an ellipsis. Fixed labels are the premium
+     give-away: every name is the same weight and size and shares one baseline,
+     and because a tile can never widen, a long name can never push its
+     neighbour out of line - it is trimmed instead, exactly as the product rails
+     trim theirs. */
+  .cat-circle-name {
+    display: block;
+    max-width: 100%;
+    font-size: 12.5px;
+    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.22s ease;
+  }
+  .cat-circle:hover .cat-circle-img {
+    border-color: var(--orange);
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(158, 40, 64, 0.16);
+  }
+  .cat-circle:hover .cat-circle-name {
+    color: var(--orange);
+  }
+  /* The tile beside the featured categories that leads to the complete list. It
+     borrows the very same ring, type and hover lift, so the row stays optically
+     level, and only the ring's tone tells it apart. */
+  .cat-circle-all .cat-circle-img {
+    background: var(--navy);
+    box-shadow: none;
+    color: #fff;
+  }
+  .cat-circle-all:hover .cat-circle-img {
+    border-color: var(--navy-dark);
+  }
+
+  /* ---------- Product page blocks ---------- */
+  /* Gallery: a five-tile thumbnail rail beside the main image. The rail is a
+     fixed 74px column and the stage keeps the square aspect the old page used,
+     so swapping the single-image block for the rail does not move the buy box. */
+  .pd-gallery {
+    display: flex;
+    gap: 16px;
+    /* Centre the thumbnail rail against the square stage, so the main image and
+       all five thumbnails share one axis and read as perfectly aligned. */
+    align-items: center;
+  }
+  .pd-thumbs {
+    display: flex;
+    width: 74px;
+    flex: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+  .pd-thumb {
+    aspect-ratio: 1;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: var(--blush);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.2s, opacity 0.2s, transform 0.2s;
+    opacity: 0.68;
+  }
+  .pd-thumb:hover {
+    opacity: 1;
+  }
+  .pd-thumb.is-active {
+    border-color: var(--teal);
+    opacity: 1;
+  }
+  .pd-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* A video tile is a real video, so it needs the same box as an image tile. */
+  .pd-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .pd-thumb-play {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 18px;
+    height: 18px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.62);
+    color: #fff;
+  }
+  .pd-stage {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #ffffff 0%, #fdf7f8 100%);
+    box-shadow: 0 1px 2px rgba(27, 27, 27, 0.04), 0 22px 46px -30px rgba(158, 40, 64, 0.3);
+  }
+  .pd-stage-btn {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: zoom-in;
+  }
+  .pd-stage-btn::before {
+    content: "";
+    display: block;
+    padding-top: 100%;
+  }
+  .pd-main-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .pd-stage-btn:hover .pd-main-img {
+    transform: scale(1.03);
+  }
+  .pd-zoom-hint {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--navy);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+    pointer-events: none;
+  }
+
+  /* Lightbox. Fixed and above everything, so opening it changes no layout. */
+  .pd-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(12, 16, 24, 0.88);
+    padding: 5vh 5vw;
+    animation: pdFade 0.18s ease-out;
+  }
+  @keyframes pdFade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* Cookie consent banner entrance. A short rise makes the banner read as
+     arriving rather than flashing into place. Reduced-motion users get the
+     banner immediately, with no movement - the animation is decoration, and the
+     choice it offers must never depend on it. */
+  @keyframes consentIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .consent-in {
+    animation: consentIn 0.24s var(--ease-out-soft);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .consent-in {
+      animation: none;
+    }
+  }
+  .pd-lightbox-img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 14px;
+    object-fit: contain;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+  }
+  .pd-lightbox-close,
+  .pd-lightbox-nav {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .pd-lightbox-close:hover,
+  .pd-lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+  .pd-lightbox-close {
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+  }
+  .pd-lightbox-nav {
+    top: 50%;
+    margin-top: -22px;
+    width: 44px;
+    height: 44px;
+  }
+  .pd-lightbox-prev {
+    left: 18px;
+  }
+  .pd-lightbox-next {
+    right: 18px;
+  }
+
+  /* Four-promise trust strip under the buy box. A single horizontal row of four
+     evenly-spaced, equal-width blocks (icon over title over description), so the
+     promises read as one confident band rather than a stacked list. It wraps to
+     two columns on tablet and stays two-up on phones, so it never overflows. */
+  .pd-trust {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 26px;
+  }
+  .pd-trust-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    border-radius: 14px;
+    border: 1px solid var(--line-soft);
+    background: #fff;
+    padding: 18px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .pd-trust-item:hover {
+    border-color: var(--teal);
+    box-shadow: 0 10px 26px -18px rgba(158, 40, 64, 0.4);
+    transform: translateY(-2px);
+  }
+  .pd-trust-ic {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--teal-soft);
+    color: var(--teal-deep);
+  }
+  .pd-trust-title {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .pd-trust-sub {
+    display: block;
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--gray);
+  }
+
+  /* Tab set. */
+  .pd-tabs {
+    margin-top: 4px;
+  }
+  .pd-tablist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pd-tab {
+    border: 0;
+    background: transparent;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.18s, border-color 0.18s;
+  }
+  .pd-tab:hover {
+    color: var(--navy);
+  }
+  .pd-tab.is-active {
+    color: var(--navy-dark);
+    border-bottom-color: var(--coral);
+  }
+  .pd-tabpanel {
+    padding-top: 20px;
+  }
+  .pd-prose-wrap {
+    max-width: 74ch;
+  }
+  .pd-prose {
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--gray);
+  }
+  .pd-prose + .pd-prose {
+    margin-top: 10px;
+  }
+  .pd-prose-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .pd-prose-title:not(:first-child) {
+    margin-top: 20px;
+  }
+  .pd-features {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .pd-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--gray);
+  }
+  .pd-features svg {
+    margin-top: 3px;
+    color: var(--teal);
+  }
+  .pd-link {
+    color: var(--teal-deep);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .pd-specs {
+    display: grid;
+    gap: 0;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 74ch;
+  }
+  .pd-spec-row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .pd-spec-row:last-child {
+    border-bottom: 0;
+  }
+  .pd-spec-row:nth-child(odd) {
+    background: color-mix(in oklab, var(--blush) 55%, #fff);
+  }
+  .pd-spec-row dt {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  .pd-spec-row dd {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  /* Recent-purchase toast. Fixed, so it never enters the page flow. */
+  .pd-toast {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    max-width: min(92vw, 380px);
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-lg);
+    animation: pdToastIn 0.3s ease-out;
+  }
+  @keyframes pdToastIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .pd-toast-ic {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--teal-soft);
+    color: var(--teal-deep);
+  }
+  .pd-toast-text {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--gray);
+  }
+  .pd-toast-text b {
+    color: var(--ink);
+  }
+  .pd-toast-x {
+    flex: none;
+    border: 0;
+    background: transparent;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  /* Rating line under the title. */
+  .pd-rating {
+    display: inline-flex;
+    align-items: center;
+  }
+  .pd-rating-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--teal-deep);
+    cursor: pointer;
+  }
+  .pd-rating-link:hover {
+    color: var(--coral);
+  }
+  /* The no-reviews-yet state: same row, a touch quieter, so the buy box keeps
+     its rating line without pretending a score exists. */
+  .pd-rating-empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--teal-deep);
+  }
+  .pd-lowstock {
+    color: var(--coral-deep);
+  }
+
+  @media (max-width: 860px) {
+    /* Small screens: the stage sits on top and the five thumbnails become a
+       centred row beneath it, so the rail can never run taller than the image
+       and every thumbnail stays aligned. */
+    .pd-gallery {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .pd-thumbs {
+      flex-direction: row;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .pd-thumb {
+      width: 64px;
+      flex: none;
+    }
+    .pd-trust {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .pd-spec-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .pd-toast {
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      max-width: none;
+    }
+  }
+
+  /* ---------- Feature / trust strip ---------- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+  }
+  .feature-item {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+  }
+  .feature-item + .feature-item {
+    border-left: 1px solid var(--line);
+  }
+  .feature-ic {
+    color: var(--navy);
+    background: var(--navy-soft);
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .feature-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+  }
+  .feature-sub {
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+
+  /* ------------------------------------------------------------------------
+     PRODUCT PAGE - reference layout.
+
+     The reference's product page is a dense, single-purpose column: a slim
+     breadcrumb, a two-column product area, a full-width promise band, the tab
+     set, and a related row. The rules below build exactly that, and every
+     vertical gap is deliberately small so the page reads as one continuous
+     block rather than a stack of airy sections with dead space between them.
+     ------------------------------------------------------------------------ */
+
+  /* Page column. Matches .container-page so the product page lines up with the
+     header and footer above and below it. */
+  .pp-wrap {
+    width: min(1200px, 92%);
+    margin-inline: auto;
+  }
+
+  /* Breadcrumb: a slim row with a home icon, tight to the top of the page. */
+  .pp-breadcrumb-wrap {
+    padding-top: 12px;
+  }
+  .pd-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+  .pd-breadcrumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gray);
+    transition: color 0.18s;
+  }
+  .pd-breadcrumb a:hover {
+    color: var(--orange);
+  }
+  .pd-breadcrumb .bc-sep {
+    color: var(--gray-2);
+  }
+  .pd-breadcrumb .bc-here {
+    color: var(--ink);
+    font-weight: 600;
+    max-width: 52ch;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  /* Each crumb is a flex pair of [separator, link] so the wrap point always
+     falls BETWEEN crumbs - a separator can never be orphaned on its own line. */
+  .pd-breadcrumb .pd-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Two-column product area: gallery left, buy box right. */
+  .pp-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 44px;
+    align-items: start;
+    padding-top: 8px;
+  }
+  .pp-info {
+    min-width: 0;
+  }
+
+  /* ---- Buy box ---------------------------------------------------------- */
+  .pd-title {
+    margin-top: 4px;
+    font-family: var(--font-display, inherit);
+    /* A long, descriptive product name (this store's titles run to eight words)
+       must not push the buy box below the fold: the heading is clamped to a
+       compact size and any remaining overflow reveals on click, so the rating,
+       price and Add to Cart buttons all stay in view on a laptop. */
+    font-size: clamp(1.25rem, 2.3vw, 1.75rem);
+    line-height: 1.18;
+    letter-spacing: -0.008em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Availability: ONE honest read on stock for the chosen option. The badge
+     carries a status dot and states the fact; the note beside it says what
+     happens next. No duplicate "In Stock" pill, no generic reassurance line. */
+  .pd-avail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-top: 6px;
+  }
+  .pd-avail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+  }
+  .pd-avail-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 0 3px color-mix(in oklab, currentColor 22%, transparent);
+  }
+  .pd-avail-badge.is-in {
+    color: var(--green);
+    background: color-mix(in oklab, var(--green) 10%, #fff);
+    border-color: color-mix(in oklab, var(--green) 28%, #fff);
+  }
+  .pd-avail-badge.is-low {
+    color: var(--orange-deep);
+    background: color-mix(in oklab, var(--orange) 10%, #fff);
+    border-color: color-mix(in oklab, var(--orange) 34%, #fff);
+  }
+  .pd-avail-badge.is-out {
+    color: var(--gray);
+    background: color-mix(in oklab, var(--gray) 10%, #fff);
+    border-color: var(--line);
+  }
+  .pd-avail-note {
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+  .pd-rating-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .pd-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  /* The three buy-deciding promises, quoting the live store policy. */
+  .pd-assurance {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 10px;
+    padding: 9px 13px;
+    border-radius: 14px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    font-size: 12.6px;
+    list-style: none;
+  }
+  .pd-assurance li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.8px;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .pd-assurance svg {
+    flex-shrink: 0;
+    color: var(--pink);
+  }
+  .pd-short {
+    margin-top: 8px;
+    max-width: 62ch;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--gray);
+    /* ONE row, always. The text is DERIVED to fit a single row by construction
+       (`productShortLine` in shared/store.ts bounds it to ~46 characters); this
+       is the belt-and-braces half of that guarantee. Should a future product
+       ever derive a longer line, it clips at the buy box instead of wrapping to
+       a second row and pushing the price and add-to-cart control down.
+       `overflow: hidden` rather than `text-overflow: ellipsis` on purpose - the
+       line must never read as cut off - and `nowrap` means it cannot wrap.
+       Layout only: font, colour, size and max-width are unchanged. */
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .pd-variants,
+  .pd-qty {
+    margin-top: 10px;
+  }
+
+  /* ---- Two-step variant picker: compact size chips + colour swatches ----
+     Replaces the twelve flat option rows the live page shipped. Two rows, tight
+     spacing, so the buy box clears the fold on a laptop. */
+  .pd-options {
+    margin-top: 10px;
+    display: grid;
+    gap: 10px;
+  }
+  .pd-opt-group {
+    display: grid;
+    gap: 8px;
+  }
+  .pd-opt-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .pd-sizeguide-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal-deep);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .pd-sizeguide-link:hover {
+    color: var(--coral);
+  }
+  .pd-opt-current {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .pd-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .size-chip {
+    min-width: 46px;
+    height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s;
+  }
+  .size-chip:hover {
+    border-color: var(--pink);
+  }
+  .size-chip.is-on {
+    border-color: var(--pink);
+    background: var(--pink-tint);
+    color: var(--orange-deep);
+    box-shadow: inset 0 0 0 1px var(--pink);
+  }
+  .size-chip.is-out {
+    cursor: not-allowed;
+    opacity: 0.42;
+    text-decoration: line-through;
+  }
+  .pd-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .color-swatch {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .color-swatch:hover {
+    border-color: var(--pink);
+    transform: translateY(-1px);
+  }
+  .color-swatch.is-on {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--pink) 40%, transparent);
+  }
+  .color-swatch.is-out {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+  .color-swatch-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  .color-swatch-dot.has-border {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+  }
+  .pd-opt-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--gray);
+  }
+  .pd-opt-sku {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--gray);
+  }
+  .pd-opt-stock {
+    font-weight: 700;
+    color: var(--teal-deep);
+  }
+  .pd-opt-stock.is-out {
+    color: var(--gray);
+  }
+  /* Delivery estimate line: the store's own shipping window. */
+  .pd-delivery {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    font-size: 12.8px;
+    font-weight: 600;
+    color: var(--teal-deep);
+  }
+  .pd-delivery svg {
+    flex: none;
+  }
+  .pd-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .qty-stepper {
+    display: inline-flex;
+    align-items: center;
+    height: 46px;
+    margin-top: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+  }
+  .qty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--navy);
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .qty-btn:hover {
+    background: var(--navy-soft);
+  }
+  .qty-input {
+    width: 52px;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    outline: 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .pd-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .pd-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    margin-top: 16px;
+  }
+  /* Wishlist / share are inline BUTTONS here, not underlined links: the
+     reference presents them as quiet actions beside the primary CTAs. */
+  button.pd-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--navy);
+    text-decoration: none;
+    transition: color 0.18s;
+  }
+  button.pd-link:hover {
+    color: var(--orange);
+  }
+  button.pd-link.is-on {
+    color: var(--orange-deep);
+  }
+
+  /* ---- Features strip: a FULL-WIDTH band under the product area ---------- */
+  .features-strip.is-band {
+    margin-top: 30px;
+    padding: 22px 0;
+    background: color-mix(in oklab, var(--blush) 45%, #fff);
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .features-strip.is-band .features-grid {
+    gap: 20px;
+  }
+
+  /* ---- Tabs ------------------------------------------------------------- */
+  .pp-tabs-wrap {
+    padding-top: 34px;
+    padding-bottom: 6px;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    margin-bottom: -1px;
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    transition: color 0.18s, border-color 0.18s;
+  }
+  .tab-btn:hover {
+    color: var(--navy);
+  }
+  .tab-btn.active {
+    color: var(--navy-dark);
+    border-bottom-color: var(--coral);
+  }
+  .tab-pane {
+    padding-top: 20px;
+  }
+
+  /* Description pane: copy + check-list on the left, promo card on the right. */
+  .desc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+  .desc-text {
+    min-width: 0;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--gray);
+  }
+  .desc-text p {
+    font-size: 14.5px;
+    line-height: 1.75;
+  }
+  /* Paragraph rhythm: the copy is written as separated paragraphs, so the first
+     one sits flush and every later one is spaced. Without this the paragraphs
+     would run together with no gap. */
+  .desc-text p + p {
+    margin-top: 14px;
+  }
+  .desc-text p + .pd-prose-title {
+    margin-top: 22px;
+  }
+
+  /* ---- Single-option statement -------------------------------------------
+     A product with only ONE buyable configuration states it rather than
+     drawing a one-chip chooser and a "Size guide" link that would have nothing
+     to explain. */
+  .pd-opt-single {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pd-opt-single-value {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  /* A supplier-stated single-option listing reads as a premium pair: the small
+     uppercase dimension word, then the real value on a soft chip. It states ONE
+     option, so no ring, no hover and no cursor - it is not a control. */
+  .pd-opt-single:not(.pd-opt-single-plain) .pd-opt-single-value {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--blush);
+    font-size: 13px;
+  }
+  /* A product whose real supplier listing has NO options: it comes in one
+     configuration and there is nothing to choose. Stated as a plain sentence in
+     the muted meta colour rather than a labelled row, so the buy box does not
+     dress a constant up as a choice (which is what a heading reading "Option"
+     over a single value did). */
+  .pd-opt-single-plain .pd-opt-single-value {
+    font-weight: 500;
+    color: var(--gray);
+  }
+  .desc-promo {
+    position: relative;
+    min-height: 220px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--blush);
+  }
+  .desc-promo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    object-fit: cover;
+  }
+  .desc-promo-content {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 18px 20px;
+    color: #fff;
+    background: linear-gradient(to top, rgba(27, 27, 27, 0.8), rgba(27, 27, 27, 0));
+  }
+  .desc-promo-content h3 {
+    font-size: 19px;
+    line-height: 1.2;
+    color: #fff;
+  }
+  .desc-promo-content p {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.86);
+  }
+  .pd-check-list {
+    display: grid;
+    gap: 9px;
+    margin-top: 10px;
+    padding: 0;
+    list-style: none;
+  }
+  .pd-check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--gray);
+  }
+  .pd-check-list svg {
+    flex: none;
+    margin-top: 3px;
+    color: var(--navy);
+  }
+
+  /* Product Details pane: a two-column spec table. */
+  .spec-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+  }
+  .spec-table td {
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .spec-table tr:last-child td {
+    border-bottom: 0;
+  }
+  .spec-table td:first-child {
+    width: 210px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--navy);
+    background: color-mix(in oklab, var(--blush) 55%, #fff);
+  }
+
+  /* Reviews pane: the real reviews on the left, the form on the right. */
+  .reviews-split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+  .reviews-left-col,
+  .reviews-right-col {
+    min-width: 0;
+  }
+  .reviews-list {
+    display: grid;
+    gap: 16px;
+  }
+  .reviews-empty {
+    padding: 24px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--blush) 55%, #fff);
+    font-size: 14px;
+    text-align: center;
+    color: var(--gray);
+  }
+  .pd-review-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .pd-review-photos img {
+    width: 64px;
+    height: 64px;
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  /* ---- Sticky add-to-cart bar -------------------------------------------
+     Pinned to the bottom of the viewport once the buy box scrolls out of view.
+     Fixed, so it adds nothing to the page flow and can never shift the layout.
+     Hidden on very small screens, where the height is better spent on content. */
+  .sticky-addbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 80;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: saturate(1.2) blur(8px);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 24px -12px rgba(158, 40, 64, 0.28);
+    animation: stickyBarIn 0.24s var(--ease-out-soft);
+  }
+  @keyframes stickyBarIn {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  .sticky-addbar-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+  }
+  .sticky-addbar-thumb {
+    width: 46px;
+    height: 46px;
+    flex: none;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--blush);
+  }
+  .sticky-addbar-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+  .sticky-addbar-name {
+    overflow: hidden;
+    font-family: var(--font-display, inherit);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sticky-addbar-sub {
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--gray);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sticky-addbar-sub b {
+    color: var(--orange-deep);
+  }
+  .sticky-addbar-btn {
+    margin-left: auto;
+    flex: none;
+  }
+  /* On a phone the bar stays (it is the primary buy path once the box is gone);
+     the thumbnail simply shrinks so the name, the selected variant and the
+     button all still fit on one line. */
+  @media (max-width: 640px) {
+    .sticky-addbar-thumb {
+      width: 38px;
+      height: 38px;
+    }
+    .sticky-addbar-inner {
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .sticky-addbar-btn {
+      padding: 0 14px;
+    }
+  }
+
+  /* ---- Related / Complete the setup --------------------------------------
+     The product page's closing cross-sell, and deliberately the strongest block
+     below the tabs. It has TWO shapes and one design: a full card grid once the
+     catalogue holds related products, and - while the store carries a single
+     product - a "Complete the setup" pair of real extras. Both end in the same
+     benefit rail, which restates the four promises at the exact point the
+     shopper is deciding whether to add them. */
+  .pp-related {
+    margin-top: 14px;
+    padding: 40px 0 60px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .pp-related-head {
+    align-items: flex-start;
+    margin-bottom: 26px;
+  }
+  .pp-related-sub {
+    margin-top: 8px;
+    max-width: 58ch;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--gray);
+  }
+  .pp-setup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .pp-setup-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .pp-setup-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+    border-color: color-mix(in oklab, var(--orange) 35%, var(--line));
+  }
+  .pp-setup-ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--blush);
+    color: var(--orange-deep);
+  }
+  .pp-setup-title {
+    margin-top: 4px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .pp-setup-body {
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--gray);
+  }
+  .pp-setup-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--orange-deep);
+  }
+  .pp-related-perks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 30px;
+    margin-top: 34px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .pp-related-perks li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .pp-related-perks svg {
+    color: var(--orange-deep);
+  }
+
+  /* Responsive: below the two-column breakpoint the product area stacks (gallery
+     on top, buy box beneath), the description and reviews panes go
+     single-column, and the spec table's label column narrows so the value still
+     has room on a phone. */
+  @media (max-width: 980px) {
+    .pp-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 26px;
+    }
+    .desc-grid,
+    .reviews-split-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+  }
+  @media (max-width: 640px) {
+    .pp-wrap {
+      width: 94%;
+    }
+    .pp-breadcrumb-wrap {
+      padding-top: 16px;
+    }
+    .pp-layout {
+      gap: 20px;
+      padding-top: 14px;
+    }
+    .pd-actions {
+      flex-direction: column;
+    }
+    .pd-actions > * {
+      width: 100%;
+    }
+    .pd-links {
+      gap: 14px;
+    }
+    .spec-table td:first-child {
+      width: 130px;
+    }
+    .features-strip.is-band {
+      margin-top: 22px;
+      padding: 18px 0;
+    }
+    .pp-tabs-wrap {
+      padding-top: 26px;
+    }
+    .pp-related {
+      padding: 30px 0 44px;
+    }
+    /* The extras stack on a phone: a three-across grid at 390px would squeeze
+       every card's copy to two words a line. */
+    .pp-setup-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .pp-related-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .pp-related-perks {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 26px;
+      padding-top: 20px;
+    }
+  }
+
+  /* ---------- Newsletter band ---------- */
+  .newsletter-band {
+    background: var(--navy-soft);
+    padding: 36px 0;
+  }
+  .newsletter-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 26px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .newsletter-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .newsletter-ic {
+    width: 58px;
+    height: 58px;
+    background: #fff;
+    color: var(--navy);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .newsletter-title {
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--navy-deep);
+  }
+  .newsletter-sub {
+    color: var(--gray);
+    font-size: 13.5px;
+    max-width: 380px;
+  }
+  .newsletter-form {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    max-width: 460px;
+    min-width: 0;
+  }
+  .newsletter-form input {
+    flex: 1;
+    border: 1.5px solid rgba(158, 40, 64, 0.16);
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    outline: 0;
+    min-width: 0;
+  }
+  .newsletter-form input:focus {
+    border-color: var(--navy);
+  }
+
+  /* ---------- Footer ---------- */
+  .ft {
+    background: var(--footer-bg);
+    padding-top: 52px;
+    margin-top: 8px;
+  }
+  .ft-grid {
+    display: grid;
+    /* Every track is `minmax(0, …)`, not a bare `fr`: a bare track's minimum is
+       `auto`, which floors at the WIDEST child's max-content - so one long link
+       ("Pet Collars, Harnesses & Accessories") held the Shop column at ~300px and
+       pushed the grid 70px past its container on a phone. With the zero minimum
+       the column shrinks and the link text wraps inside it. */
+    grid-template-columns:
+      minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr)
+      minmax(0, 1.7fr);
+    gap: 30px;
+    padding-bottom: 40px;
+  }
+  .ft-tagline {
+    color: var(--gray);
+    font-size: 13.5px;
+    margin: 14px 0 16px;
+    max-width: 240px;
+  }
+  .ft-socials {
+    display: flex;
+    gap: 9px;
+  }
+  .ft-socials a {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .ft-socials a:hover {
+    background: var(--navy);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+  .ft-head {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    color: var(--ink);
+  }
+  .ft-col {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .ft-col a,
+  .ft-col span {
+    color: var(--gray);
+    font-size: 13.5px;
+    transition: color 0.2s;
+    /* BLOCK-level flex, not inline-flex: an inline-level box sizes to its
+       max-content and would burst the column no matter how narrow the track is.
+       As a block it takes the column's width and the label wraps. */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* A long unbroken token (the contact email) can break rather than spill out
+       of a narrow column at any width. */
+    overflow-wrap: anywhere;
+  }
+  .ft-col a:hover {
+    color: var(--orange);
+  }
+  /* The mailing address, on ONE line at every width. `nowrap` alone spilled
+     ~20px in the old 1.5fr column, so the address is set a touch smaller and the
+     "Get in touch" track is widened to hold it (see .ft-grid below); the row is a
+     flex line so the pin icon never wraps away from the text. */
+  .ft-addr-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .ft-addr {
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  .ft-bottom {
+    border-top: 1px solid var(--line);
+    padding: 16px 0;
+  }
+  /* The bottom bar reserves a lane at its right for the floating back-to-top
+     disc. The disc is fixed, so it hovers over whatever is beneath it at any
+     scroll position; at the foot of the page that is this row, and without the
+     lane the disc would sit on the last payment badge. Reserving it is what
+     makes "floats above everything" and "covers nothing" both true. The
+     padding only trims the row's inner width - the columns, the grid and the
+     band heights are untouched, and the row has spare width to give. */
+  .ft-bottom-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-right: 68px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+  /* The copyright line and the "Cookie settings" control share one group on the
+     left, with the payment badges pushed right. The control is styled as a quiet
+     underlined text link rather than a button - it is a preference, not a call to
+     action - but it stays a real <button>, so it is reachable from the keyboard
+     and announced as a control rather than skipped as decoration. */
+  .ft-bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 6px 14px;
+    flex-wrap: wrap;
+  }
+  .ft-cookie-link {
+    font: inherit;
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    transition: color 0.2s var(--ease-out-soft);
+  }
+  .ft-cookie-link:hover,
+  .ft-cookie-link:focus-visible {
+    color: var(--primary);
+  }
+  @media (max-width: 560px) {
+    /* On a phone the whole row wraps anyway, so the lane can be narrower. */
+    .ft-bottom-inner {
+      padding-right: 56px;
+    }
+  }
+  .pay-icons {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex-wrap: wrap;
+  }
+  /* The "We accept" caption: small caps, generously tracked, so it reads as a
+     quiet label rather than competing with the marks beside it. */
+  .pay-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+  .pay-list {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  /* Every badge is the same 40x25 tile. The marks inside keep their own true
+     proportions - only the tile is fixed, which is what makes the row line up
+     instead of six logos of six different sizes. The tile carries NO fill, so
+     each mark sits directly on the footer ground with a single hairline and a
+     whisper of lift - no white box behind the logo. Scaled down from 48x30 so
+     the row reads as a quiet, refined detail rather than a loud logo wall. */
+  .pay-badge {
+    display: block;
+    height: 25px;
+    width: 40px;
+    flex: 0 0 auto;
+    border-radius: 6px;
+    --pay-frame: #e6cfca;
+    box-shadow: 0 1px 2px rgba(158, 40, 64, 0.06);
+    transition:
+      transform 0.25s var(--ease-out-soft),
+      box-shadow 0.25s var(--ease-out-soft);
+  }
+  .pay-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px -3px rgba(158, 40, 64, 0.18);
+  }
+  .pay-badge-tile {
+    fill: none;
+    stroke: var(--pay-frame);
+  }
+  /* The "Secured by NOWPayments" trust badge: the gateway's wordmark lockup on a
+     quiet pill, sitting to the right of the card marks. It is a real link to the
+     gateway, so a shopper can check the claim. The logotype is black on
+     transparent, which reads cleanly on the footer's cream ground. */
+  .pay-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 11px;
+    border: 1px solid var(--pay-frame);
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(158, 40, 64, 0.06);
+    text-decoration: none;
+    transition:
+      transform 0.25s var(--ease-out-soft),
+      box-shadow 0.25s var(--ease-out-soft);
+  }
+  .pay-verified:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px -3px rgba(158, 40, 64, 0.18);
+  }
+  .pay-verified-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gray);
+    white-space: nowrap;
+  }
+  .pay-verified-logo {
+    display: block;
+    height: 17px;
+    width: auto;
+  }
+  /* The bottom bar's right cluster: the payment row with the back-to-top button
+     beside it. */
+  .ft-bottom-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  /* Back to top, floating. A 40px disc pinned to the lower RIGHT of the
+     VIEWPORT, so it is reachable at any scroll position - it used to sit inside
+     the footer, where a reader had to reach the very bottom of the page before
+     it was any use. `position: fixed` takes it out of flow, so it adds no height
+     anywhere and cannot shift the layout; the safe-area insets plus the right
+     offset keep it clear of the home indicator and of the scrollbar gutter. It
+     is a real button, so it is keyboard operable, and :focus-visible draws the
+     ring. The easing is repeated here only to switch it off for reduced motion. */
+  .to-top {
+    position: fixed;
+    right: calc(20px + env(safe-area-inset-right, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 80;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 16px -6px rgba(158, 40, 64, 0.45);
+    transition:
+      background-color 0.2s var(--ease-out-soft),
+      transform 0.2s var(--ease-out-soft),
+      box-shadow 0.2s var(--ease-out-soft);
+  }
+  .to-top svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s var(--ease-out-soft);
+  }
+  .to-top:hover {
+    background: var(--navy-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -8px rgba(158, 40, 64, 0.55);
+  }
+  .to-top:hover svg {
+    transform: translateY(-1.5px);
+  }
+  .to-top:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .to-top,
+    .to-top svg {
+      transition: none;
+    }
+    .to-top:hover {
+      transform: none;
+    }
+  }
+  @media (max-width: 560px) {
+    /* The caption is a nicety the badges do not depend on, so it steps aside on
+       a narrow phone and gives the row the full width to wrap into. */
+    .pay-label {
+      display: none;
+    }
+  }
+
+  /* ---------- Page hero (inner pages) ---------- */
+  .page-hero {
+    background: linear-gradient(180deg, var(--blush), var(--background));
+    padding: 52px 0 56px;
+    text-align: center;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .page-title {
+    font-size: clamp(26px, 3.4vw, 38px);
+    font-weight: 400;
+    line-height: 1.16;
+    letter-spacing: -0.012em;
+  }
+  .page-sub {
+    color: var(--gray);
+    font-size: 15px;
+    max-width: 620px;
+    margin: 14px auto 0;
+  }
+
+  /* ---------- Forms ---------- */
+  .field-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 6px;
+  }
+  .field {
+    width: 100%;
+    border: 1.5px solid var(--input);
+    border-radius: 11px;
+    background: #fff;
+    padding: 12px 15px;
+    font-size: 14.5px;
+    color: var(--ink);
+    outline: 0;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field:focus {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--navy) 12%, transparent);
+  }
+  .field::placeholder {
+    color: var(--gray-2);
+  }
+
+  /* ---------- Misc ---------- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .divider-glow {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent);
+  }
+  .link-underline {
+    position: relative;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: currentColor;
+    transition: transform 0.35s var(--ease-out-soft);
+  }
+  .link-underline:hover::after {
+    transform: scaleX(1);
+  }
+  .hover-lift {
+    transition: transform 0.4s var(--ease-out-soft), box-shadow 0.4s var(--ease-out-soft);
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  .trust-card {
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .trust-row {
+    display: flex;
+    gap: 13px;
+    align-items: center;
+  }
+  .trust-t {
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .trust-s {
+    font-size: 12.5px;
+    color: var(--gray);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (min-width: 992px) {
+    .grid-4 {
+      gap: 26px;
+    }
+    .p-name {
+      font-size: 16px;
+    }
+    .price-now {
+      font-size: 18.5px;
+    }
+  }
+  @media (max-width: 1100px) {
+    /* The category control stays visible below this width - it used to be
+       hidden here - but the pill is narrower, so the label truncates with an
+       ellipsis instead of pushing the submit button off the end. Below the md
+       breakpoint the whole search field is hidden by design (`hidden md:flex`)
+       and the drawer's category tab takes over. */
+    .hd-cat-trigger {
+      max-width: 150px;
+    }
+    .ft-grid {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .grid-4 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 1000px) {
+    .hd-menu,
+    .hd-actions .hd-action-label {
+      display: none;
+    }
+    .hd-burger {
+      display: inline-flex;
+    }
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .feature-item + .feature-item {
+      border-left: none;
+    }
+    .features-grid .feature-item {
+      justify-content: flex-start;
+    }
+  }
+  @media (max-width: 860px) {
+    /* Below the md breakpoint the search control that opens this panel is
+       hidden on purpose (the drawer's category tab takes over), so the panel
+       itself only has to survive a tablet - a single column keeps every name
+       readable rather than squeezing three tracks. */
+    .hd-mega-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .section {
+      padding: 38px 0;
+    }
+    .ft-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      padding-bottom: 28px;
+    }
+    .section-head {
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 24px;
+    }
+    .grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .p-name {
+      font-size: 14.5px;
+    }
+    .price-now {
+      font-size: 16px;
+    }
+    /* Tablet: a slightly tighter rail with a little less room per tile, so the
+       featured set still wraps into a tidy, centred block. */
+    .cat-circles {
+      gap: 26px 16px;
+      padding: 30px 0 6px;
+    }
+    .cat-circle {
+      flex-basis: 96px;
+    }
+    .brand-name {
+      font-size: 23px;
+    }
+    .hd-main-in {
+      padding: 12px 0;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hd-search {
+      order: 3;
+      flex-basis: 100%;
+      max-width: none;
+    }
+    .hd-actions {
+      gap: 14px;
+    }
+    .newsletter-form {
+      max-width: none;
+    }
+    .page-hero {
+      padding: 32px 0 36px;
+    }
+  }
+  @media (max-width: 560px) {
+    /* Phone: a three-up rail that wraps and centres, so the whole set stays
+       visible with no sideways scroll and nothing overflows the container. */
+    .cat-circles {
+      gap: 22px 12px;
+      padding: 24px 0 4px;
+    }
+    .cat-circle {
+      flex-basis: 80px;
+    }
+    .cat-circle-img {
+      max-width: 68px;
+    }
+    .cat-circle-name {
+      font-size: 11.5px;
+    }
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+    .feature-ic {
+      width: 40px;
+      height: 40px;
+    }
+    .section {
+      padding: 28px 0;
+    }
+    .hd-top-left,
+    .hd-top-right {
+      gap: 12px;
+      font-size: 11px;
+    }
+    /* The announcement is the only thing in the strip worth reading, and at this
+       width the socials sat beside it and the 68vw cap cut the sentence off
+       mid-word ("30-day retur..."). Let it take the full row; the socials wrap
+       beneath it. The ellipsis stays as a genuine last-resort guard. */
+    .hd-top-line {
+      max-width: 100%;
+    }
+  }
+  /* Phone: a SINGLE footer column. In a 2-up grid each column is ~160px, which
+     cannot hold the one-line mailing address or the contact email - both spilled
+     out of their track. Full width fixes it; only below 380px does the address
+     fall back to wrapping so it never overflows a very narrow screen. */
+  @media (max-width: 760px) {
+    .ft-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 22px;
+    }
+  }
+}
+
+@layer utilities {
+  /* Entrance motion runs ON MOUNT, never scroll-linked: content is never left
+     hidden waiting for a viewport event, so a no-JS render and a full-page
+     capture both show every element. */
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-in-up {
+      animation: reveal-up 0.6s var(--ease-out-soft) both;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-in-up {
+      animation: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------ Hero.
+     The home hero is a single photograph, and all of its motion is optional
+     decoration on top of a plain <img>: a very slow Ken Burns drift, plus a
+     shallow scroll parallax. Both are compositor-only (scale / translate, no
+     layout, no repaint), so they stay smooth on a low-end phone, and both are
+     switched off entirely for anyone who asked for less motion.
+
+     The parallax offset is handed in by JS as the custom property below; the
+     image's own drift runs on `scale` and `translate`, so neither fights the
+     other's `transform`. */
+  .hero-frame {
+    --hero-parallax: 0%;
+  }
+  .hero-photo-wrap {
+    translate: 0 var(--hero-parallax, 0%);
+  }
+  .hero-photo {
+    transform-origin: 50% 45%;
+    scale: 1.08;
+    will-change: scale, translate;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-photo {
+      /* 26s there and back: slow enough to read as breathing rather than as an
+         effect, and long enough that a visitor never sees the loop seam. */
+      animation: hero-drift 26s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+    }
+    @keyframes hero-drift {
+      0% {
+        scale: 1.07;
+        translate: -1.1% 0.9%;
+      }
+      50% {
+        scale: 1.13;
+        translate: 1.1% -0.9%;
+      }
+      100% {
+        scale: 1.07;
+        translate: -1.1% 0.9%;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-photo {
+      animation: none;
+      scale: 1;
+    }
+    .hero-photo-wrap {
+      translate: none;
+    }
+  }
+
+  /* Libre Baskerville ships 400 and 700 only. A heading asking for 500 or 600
+     would be synthesised by the browser, which looks broken in a serif, so
+     every heading is snapped back to the real 400. 700 still works where a
+     heading explicitly asks for it (the wordmark). This sits in the utilities
+     layer so it outranks the font-medium / font-semibold utilities. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-weight: 400;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 4.2vw, 2.9rem);
+    line-height: 1.18;
+    letter-spacing: -0.012em;
+  }
+  /* The product page's own heading is exempt from that display size: a long,
+     descriptive product name (this store's titles run to eight words) would
+     otherwise wrap to three tall lines and push Add to Cart below the fold on a
+     laptop. It is set here, in the utilities layer, because that is where the
+     generic `h1` rule above lives - a components-layer rule cannot outrank it. */
+  h1.pd-title {
+    font-size: clamp(1.15rem, 2.1vw, 1.6rem);
+    line-height: 1.15;
+  }
+  /* Long serif headings wrap badly if they are allowed to hyphenate or sit on a
+     single unbreakable word; this keeps them inside their column at 390px. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
+  }
+}

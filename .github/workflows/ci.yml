@@ -1,0 +1,624 @@
+name: CI
+
+# Runs on every push (any branch) and on every pull request targeting `main`.
+# The `typecheck-and-test` job is the required status check configured by the
+# branch-protection rule on `main` - keep the job `name` stable, because that
+# string is what the protection rule matches on ("CI / typecheck-and-test").
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+# A newer push to the same ref supersedes an in-flight run on it.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The `playwright` devDependency's postinstall would otherwise download browser
+# binaries in EVERY job. Only the `overflow` job needs a browser, and it
+# downloads exactly the one it uses (below), so the download is skipped
+# globally and done explicitly there.
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+jobs:
+  typecheck-and-test:
+    name: typecheck-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # `vitest.setup.ts` (and `vite.config.ts`'s `test.env`) bind DATABASE_URL and
+    # JWT_SECRET at import time, because `server/_core/env.ts` validates the
+    # environment when the modules under test are loaded. Every data call in the
+    # suite is mocked, so nothing ever opens a socket - these are shape-valid
+    # placeholders that satisfy that import-time validation, NOT a live database.
+    # That is why no `services:` container is needed and CI stays hermetic.
+    # If a future test needs a real Postgres, add a `services: postgres:` block
+    # here and point DATABASE_URL at it.
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Installed before setup-node so its `cache: pnpm` can find pnpm on PATH.
+      # The version is pinned to match package.json's `packageManager` field.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fails the run if a credential was committed to the repository - a real
+      # `.env`, a Postgres DSN with a password to a remote host, a GitHub token,
+      # a Brevo/Resend key, or a non-empty assignment to a known secret variable.
+      # It is a pure text scan over `git ls-files`, so it runs before anything is
+      # built and needs no environment. A leaked production database password is
+      # not something a later commit can undo, so this is the first gate.
+      - name: Committed-secret scan
+        run: pnpm check:secrets
+
+      # Catches the failure mode that broke the deploy while BOTH CI jobs stayed
+      # green: vercel.json declared supplier-sync crons at `0 */6 * * *` and
+      # `30 */6 * * *` (four runs a day), which the Vercel Hobby plan rejects at
+      # DEPLOY time with "Hobby accounts are limited to daily cron jobs" - long
+      # after a perfectly good build. Nothing else in CI looked at the deploy
+      # config, so it shipped undetected. This step encodes the plan rule and
+      # fails the run instead.
+      - name: Vercel config pre-flight (cron + deploy plumbing)
+        run: pnpm check:vercel-config
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+  # The only check that looks at the DEPLOYED origin.
+  #
+  # WHY A SEPARATE JOB. Sign-in broke in production with
+  # `Unexpected token 'T', "The page c"` because the live API returned an
+  # HTML/plain-text page where the client expected JSON - and every other signal
+  # stayed green, because all of them run against a LOCAL server. This probes the
+  # real storefront and asserts the status is 2xx, the content-type is JSON, and
+  # the body parses as a real settings.public payload.
+  #
+  # It is deliberately NOT folded into `typecheck-and-test`: that job is the
+  # REQUIRED status check on `main`, and a required check must not depend on a
+  # live third-party origin - a Vercel blip would block every merge for a reason
+  # unrelated to the code under review. A failure here still gets noticed, and
+  # the same script is the body of the daily `live-api-health-check` cron (see
+  # vercel.json), so the live origin is watched every morning either way.
+  live-api:
+    name: live-api-json
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Asserts BOTH directions, so the check cannot rot into a no-op: the live
+      # origin must answer JSON, and the SAME origin's HTML page and a 404 must
+      # both be REJECTED. `LIVE_API_URL` can point this at a preview deployment
+      # to check it before it takes production traffic.
+      - name: Live API JSON health check (both directions)
+        run: pnpm check:live-api
+        env:
+          LIVE_API_URL: ${{ vars.LIVE_API_URL || 'https://www.petparcel.store' }}
+
+  # Renders the BUILT app in a real headless Chromium and fails if /cart or
+  # /checkout overflows horizontally at any phone/tablet/desktop width. This is
+  # the guard for the regression that looked "broken / not responsive": a long
+  # product title widened the cart row while `overflow-x: clip` masked it.
+  #
+  # It runs against a REAL backend with REAL data. The first version served the
+  # client with `vite preview`, which proxies /trpc to a separate API process
+  # that was never started here - so every tRPC call failed with ECONNREFUSED,
+  # the pages were measured WITHOUT settings/catalog/auth, and the log filled
+  # with proxy errors. Now the job stands up a throwaway Postgres, migrates and
+  # seeds it, builds the SAME production server the app ships (`node
+  # dist/index.js`, which serves the SPA and the API on one port - no proxy),
+  # and the gate waits for that backend to be healthy before measuring.
+  overflow:
+    name: responsive-overflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # A throwaway Postgres for this job only. The production database is NEVER
+    # touched from CI - this container is created and destroyed with the run.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # NODE_ENV is deliberately NOT set here: `pnpm install` must still install
+    # devDependencies (vite, esbuild, tsx, playwright). The gate sets
+    # NODE_ENV=production for the server it boots, which is the only place it
+    # matters. DATABASE_URL points at the service container above.
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      # The gate never calls the supplier API; a real key can be supplied as a
+      # repo secret without ever being committed. Unset is a normal state.
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `playwright` is a devDependency but its postinstall is skipped globally
+      # (see the workflow env), so fetch precisely the browser the gate drives.
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # `pnpm build` = migrate:deploy + sync:catalog + build:web + build:api, so
+      # the throwaway database is migrated and seeded with the real catalog and
+      # the gate boots the exact production server the app ships.
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      # The script boots `node dist/index.js` BEHIND REAL TLS (the production
+      # session cookie is `Secure`, which a browser will not store over http),
+      # waits for /api/health AND a real settings.public threshold, signs in a
+      # real user, seeds the cart through the REAL cart API with the catalogue's
+      # LONGEST real product title, then measures documentElement.scrollWidth,
+      # body.scrollWidth AND every element's right edge against the viewport at
+      # 320/360/375/390/414/768/1024/1280/1440 on /cart and /checkout.
+      # It FAILS on any tRPC error, on missing real content, or on a
+      # proxy/ECONNREFUSED line in the server log.
+      - name: Responsive overflow gate
+        run: node scripts/check-overflow.mjs
+
+  # Proves the AUTH + CART contract end to end against a real server and a real
+  # database, including the browser. It is the guard for two defects that both
+  # shipped green:
+  #
+  #   * Sign-in surfaced `Unexpected token 'T', "The page c"...` because the
+  #     client fed a NON-JSON host error page into the tRPC parser. The client
+  #     now refuses anything that is not a JSON response, and this job asserts
+  #     the login endpoint answers JSON with a real session cookie.
+  #   * A signed-out visitor could still see the previous account's cart, and an
+  #     unauthenticated caller could mutate it, because the basket lived only in
+  #     localStorage and a stateless session could not be revoked. This job
+  #     asserts sign-out destroys the session SERVER-SIDE (the pre-logout cookie
+  #     is refused afterwards), that an unauthenticated cart read/write is 401,
+  #     that no refused mutation reaches the database, and that signing back in
+  #     restores the saved cart from the database.
+  #
+  # `scripts/verify-auth-cart.mjs` boots the real production server behind REAL
+  # TLS (a self-signed cert generated at run time) because the production session
+  # cookie is `Secure`, which a browser will not store over plain http.
+  auth-cart:
+    name: auth-and-cart
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      AUTH_PROVIDER: local
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # migrate:deploy creates the new carts / cart_items / auth_sessions tables
+      # and sync:catalog seeds real products, so the verification runs against
+      # real rows rather than fixtures.
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      - name: Auth and cart end-to-end verification
+        run: node scripts/verify-auth-cart.mjs
+
+  # Guards the product page's ONE short line and the one-time storage sweep.
+  #
+  # The product page prints a single short descriptor under the price. It used to
+  # be the first SENTENCE of the description, which opens with the supplier's own
+  # ~200-character title - so the "line" was ~180 characters, wrapped to three or
+  # four rows inside the buy box, and left the page looking cramped. It is now
+  # DERIVED from real fields (`productShortLine` in shared/store.ts) and bounded
+  # to fit one row. This job proves that against the REAL catalogue: it picks the
+  # LONGEST real product name (not a fixture), measures the rendered line height
+  # against its own line box - so a wrapped line fails - and checks the text is
+  # not being clipped to achieve it (`scrollWidth <= clientWidth`). It repeats
+  # the check for the shortest and a second-longest name, so the derivation
+  # cannot be tuned to one product.
+  #
+  # It also drives the one-time cleanup of the PRE-server-owned basket: a browser
+  # seeded with the legacy `petparcel_cart_v1` value must come up with that key
+  # GONE, the sentinel set, every other key untouched, and a second load must not
+  # repeat the sweep.
+  ui-fixes:
+    name: product-subtext-and-storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      AUTH_PROVIDER: local
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+      SHOT_DIR: work/ui-fix-shots
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      # Boots the real production server behind real TLS, loads the product page
+      # for the LONGEST real product name at 320px and 1440px, and asserts the
+      # subtext is a single unclipped line; sweeps all nine widths for overflow;
+      # and verifies the legacy localStorage cart key is removed exactly once.
+      - name: Product subtext + legacy storage gate
+        run: node scripts/verify-ui-fixes.mjs
+
+      # Reads what the product page ACTUALLY drew for a sample of products spread
+      # across the catalogue, and asserts the swatches are real: one control per
+      # real option value, a colour group never headed as a size, every swatch a
+      # distinct real colour (never the old neutral stone), a press really
+      # switching the picked variant to a real catalogue row, and a control
+      # disabled only on real zero stock. Also asserts no social link is a dead
+      # placeholder and that the four real accounts are wired up.
+      - name: Real option swatches + social links gate
+        run: node scripts/verify-variant-swatches.mjs
+        env:
+          SHOT_DIR: work/variant-swatch-shots
+
+      # The supplier's OWN option dimensions. The picker draws one control per
+      # REAL option value, heads each dimension with the word the SUPPLIER uses
+      # ("Colour", "Size", "Pack", "Set") and never with a vague "Option", shows
+      # each colourway in its real colour, switches to a real catalogue row on a
+      # press, and draws NOTHING for a product the supplier lists as optionless
+      # rather than a placeholder choice titled "Standard".
+      - name: Real supplier option pickers
+        run: node scripts/verify-real-options.mjs
+        env:
+          SHOT_DIR: work/real-option-shots
+
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-fix-screenshots
+          path: |
+            work/ui-fix-shots/
+            work/variant-swatch-shots/
+            work/real-option-shots/
+          if-no-files-found: ignore
+
+  # The variant picker contract, as its own required check. It reads what the
+  # product page ACTUALLY drew for a sample of products spread across the
+  # catalogue and asserts the swatches are real: one control per real option
+  # value, a colour group never headed as a size, every swatch a distinct real
+  # colour, a press really switching the picked variant to a real catalogue row,
+  # a control disabled only on real zero stock or a non-existent combination,
+  # and - when the catalogue holds per-variant photographs - a colour press
+  # revealing that colour's OWN image. Also asserts no social link is a dead
+  # placeholder.
+  verify-variants:
+    name: verify-variants
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      AUTH_PROVIDER: local
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+      SHOT_DIR: work/variant-swatch-shots
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      - name: Real option swatches + variant image gate
+        run: node scripts/verify-variant-swatches.mjs
+
+      - name: Upload variant screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: variant-swatch-screenshots
+          path: work/variant-swatch-shots/
+          if-no-files-found: ignore
+
+  # Proves the SEARCH surface is both secure and smart, over real HTTP, on a real
+  # server and a real database.
+  #
+  # It exists because the two defects it guards are invisible to a unit test of
+  # the sanitizer as a pure function, and both shipped:
+  #
+  #   * A non-empty query that produced NO filter clause answered with the WHOLE
+  #     catalogue - "S", "a%b" and "%%%%" each returned 97-98 products as though
+  #     they had matched. A shopper reads that as results; it is neither secure
+  #     (an unbounded LIKE scan for anyone who can call the page) nor smart.
+  #   * A query longer than the field's cap answered with the raw serialised zod
+  #     issue list, which describes our own schema - field names, limits,
+  #     validator - instead of a human sentence.
+  #
+  # The job also asserts the six security headers are present on every response.
+  # HSTS is asserted only because this gate terminates REAL TLS in front of the
+  # server (and, like any real terminator, declares `x-forwarded-proto: https`);
+  # over plain HTTP a browser ignores HSTS and its absence is correct.
+  #
+  # The script boots `node dist/index.js` itself behind that TLS terminator, so
+  # it needs a built server and a migrated database - hence `pnpm build` above it,
+  # exactly as the sibling jobs do.
+  search-security:
+    name: search-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      AUTH_PROVIDER: local
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      - name: Search hardening + smart matching gate
+        run: pnpm verify:search-security
+
+  # Enumerates EVERY single-character query (a-z, A-Z, 0-9) and the full
+  # metacharacter-only set and asserts NONE of them answers with the unfiltered
+  # catalogue.
+  #
+  # WHY IT IS SEPARATE FROM `search-security` ABOVE. That job proves a handful of
+  # representative hostile inputs are handled. The defect underneath them is not
+  # one input, it is a CLASS: any query that carries no discriminating token -
+  # every one-character query, and anything made only of characters that have no
+  # matching meaning (`%`, `_`, quotes, slashes, an invisible no-break space).
+  # A sample argues the property from examples; this enumerates all 62
+  # alphanumerics plus the metacharacter set, so the property is proven over the
+  # whole class. A query that cannot match must answer with an empty list, never
+  # with all 98 products - a shopper reads the latter as matches, and Postgres
+  # reads a `%`-heavy pattern as "scan every row", which anyone who can open the
+  # shop page can trigger.
+  #
+  # It also carries a POSITIVE control ("dog bed" must still return a real,
+  # narrowed set), so a server that refused every request could not pass the
+  # matrix by returning nothing.
+  search-edge-cases:
+    name: search-edge-cases
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: petparcel
+          POSTGRES_PASSWORD: petparcel
+          POSTGRES_DB: petparcel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U petparcel -d petparcel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://petparcel:petparcel@localhost:5432/petparcel_test
+      JWT_SECRET: ci-placeholder-not-a-secret
+      AUTH_PROVIDER: local
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (migrate + sync catalog + web + api)
+        run: pnpm build
+
+      # Boots `node dist/index.js` behind real TLS itself, reads the catalogue
+      # size from the SAME server (never a hardcoded 98), then sends all 62
+      # single-character queries plus every metacharacter-only case and fails on
+      # any response that is not graceful or that returns the whole catalogue.
+      - name: Single-character + metacharacter search gate
+        run: pnpm verify:search-edge-cases

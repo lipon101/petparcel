@@ -1,0 +1,67 @@
+# ── Dependencies ───────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ── Build output ───────────────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+
+# `api/index.js` is DELIBERATELY NOT ignored — do not add it back.
+#
+# It is built by `pnpm build:api` (scripts/build-server.mjs) as a SELF-CONTAINED
+# bundle of the whole server, and it is the function that serves /trpc, /api and
+# /app-storage (see the rewrites in vercel.json). `dist/` stays ignored because
+# Vercel rebuilds it from source and the SPA there is a pure build output.
+#
+# This file is different: its build runs NO typecheck or tests, so a broken
+# server reaches it silently, and this pre-bundled artifact is exactly what the
+# nft-dependent deploy needs (see the long note in scripts/build-server.mjs).
+# Committing it keeps the artifact that actually ships in the diff.
+#
+# History: commit a562f5d added `api/index.js` here, which removed the function
+# from the repository. Every /api and /trpc request then fell through to the SPA
+# rewrite and received `/index.html` — the API was gone in production, and
+# sign-in died with `Unexpected token 'T', "The page c"...` because the client
+# parsed that HTML page as JSON. Keep this file tracked.
+
+# ── Environment / secrets (never commit) ───────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+logs/
+.webapp-logs/
+
+# ── Local databases / dumps ────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+*.db
+pgdata/
+*.sql.gz
+
+# ── Test / coverage output ─────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Throwaway local/dev scripts (never commit) ─────────────────────────────────
+scripts/_*
+*.local.*
+
+# ── Platform / editor cruft ────────────────────────────────────────────────────
+.vercel
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Long-lived repo-screenshot artefacts are not kept in the repository.
+documents/
+core
+
+# Scratch research/working files
+work/

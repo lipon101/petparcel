@@ -1,0 +1,58 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "regions": ["iad1"],
+  "outputDirectory": "dist/public",
+  "crons": [
+    { "path": "/api/cron/cj-stock-sync", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/cj-tracking-sync", "schedule": "30 3 * * *" },
+    { "path": "/api/cron/cj-price-sync", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/live-api-health-check", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/unpaid-order-alerts", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/telegram-outbox", "schedule": "15 9 * * *" },
+    { "path": "/api/cron/telegram-reconciliation", "schedule": "30 9 * * *" }
+  ],
+  "rewrites": [
+    { "source": "/trpc/:path*", "destination": "/api/index" },
+    { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/app-storage/:path*", "destination": "/api/index" },
+    { "source": "/robots.txt", "destination": "/api/index" },
+    { "source": "/sitemap.xml", "destination": "/api/index" },
+    { "source": "/google-merchant-feed.xml", "destination": "/api/index" },
+    { "source": "/((?!api/|trpc/|app-storage/|robots\\.txt|sitemap\\.xml|google-merchant-feed\\.xml|index\\.html).*)", "destination": "/api/index" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "header", "key": "host", "value": ".*\\.vercel\\.app" }],
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/products/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/hero.png",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+    },
+    {
+      "source": "/index.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
+}
