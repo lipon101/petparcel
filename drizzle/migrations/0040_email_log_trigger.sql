@@ -1,0 +1,19 @@
+-- email_log.trigger: what CAUSED a send.
+--
+-- WHY THIS EXISTS. The paid receipt can be sent from four different places (the
+-- signed IPN webhook, the live status reconciliation, the shopper's post-return
+-- confirmation, or an admin resend), and the unpaid-order alert is a fifth kind
+-- of send. The admin email-history panel needs to show WHICH path produced a
+-- given message - "was this the webhook, or did someone resend it by hand?" -
+-- and that fact is not recoverable from the kind alone (all four receipt paths
+-- share the `payment_confirmation` kind).
+--
+--   trigger  'ipn' | 'reconciliation' | 'post_return' | 'admin_resend' |
+--            'unpaid_alert'. NULL for kinds where it is not meaningful
+--            (shipping, welcome, contact, auth).
+--
+-- Nullable: every existing row predates the column and simply has no value. No
+-- backfill - an old row's trigger is genuinely unknown.
+--
+-- IDEMPOTENT: guarded with IF NOT EXISTS, so a re-run converges.
+ALTER TABLE "email_log" ADD COLUMN IF NOT EXISTS "trigger" text;

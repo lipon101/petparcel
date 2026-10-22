@@ -1,0 +1,31 @@
+-- NOWPayments crypto payments: the raw provider status and the invoice id.
+--
+-- WHY THIS EXISTS. The store's own `payment_status` is deliberately coarse
+-- (`unpaid` | `paid` | `failed` | `refunded`) because the admin panel, the order
+-- timeline and the CJ forwarding guard all key off it. But a crypto payment has
+-- a much richer lifecycle - waiting, confirming, confirmed, sending,
+-- partially_paid, finished, failed, refunded, expired - and the shopper's
+-- confirmation page must show the REAL state ("Confirming on the blockchain"),
+-- not a smoothed-over "unpaid".
+--
+--   payment_status_detail  the RAW NOWPayments status, verbatim. Kept so the
+--                          storefront can render the true state and so an
+--                          operator can see exactly what the provider said
+--                          without re-querying it.
+--   payment_invoice_id     the NOWPayments invoice id returned by
+--                          POST /v1/invoice. A `payment_id` only exists once the
+--                          shopper has actually started paying, so the invoice
+--                          id is what the status endpoint polls in the window
+--                          between "order placed" and "first coin sent".
+--   payment_url            the hosted invoice URL we redirect the shopper to.
+--                          Persisted so a retried checkout returns the SAME
+--                          invoice instead of creating a second one - the
+--                          idempotency guard for payment creation.
+--
+-- Both are nullable: every existing order predates crypto and simply has no
+-- value, which is the normal state. No backfill, no default.
+--
+-- IDEMPOTENT: guarded with IF NOT EXISTS, so a re-run converges.
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "payment_status_detail" text;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "payment_invoice_id" text;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "payment_url" text;

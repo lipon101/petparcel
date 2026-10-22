@@ -1,0 +1,26 @@
+# pnpm 10+ blocks dependency build scripts by default; esbuild needs its build
+# step (its native binary, used by Vite/@tailwindcss). Explicitly allow it.
+# (pnpm 11 moved this out of package.json's "pnpm" field into this file.)
+allowBuilds:
+  esbuild: true
+
+# Dependency security floors (pnpm v10+ reads `overrides` from HERE, not from
+# package.json's `pnpm` field - which this version ignores with a warning).
+#
+# WHY OVERRIDES AND NOT A DIRECT BUMP. Every entry below is a TRANSITIVE
+# dependency reached through a build tool (vite/postcss/esbuild, concurrently,
+# drizzle-kit). Naming them here forces one patched copy across the whole tree
+# without waiting for each parent to publish a release that widens its range -
+# which for a build toolchain can be months. Each floor is the version the
+# advisory names as patched.
+#
+# These are all DEV-time packages: they run during build/test on a developer's
+# machine or in CI, never in the deployed function. They are still worth fixing -
+# a compromised build toolchain is a supply-chain problem - but the live
+# storefront was never exposed to them.
+overrides:
+  shell-quote: ">=1.11.0"   # critical: command injection via `quote()`
+  nanoid: ">=3.3.18"        # high: infinite loop with a zero-size custom generator
+  source-map-js: ">=1.2.2"  # high: event-loop DoS via indexed section offsets
+  postcss: ">=8.5.23"       # moderate: sourceMappingURL arbitrary .map read
+  esbuild: ">=0.24.3"       # moderate: dev-server request proxying

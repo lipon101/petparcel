@@ -1,0 +1,26 @@
+-- The paid receipt: one-shot claim column.
+--
+-- WHY THIS EXISTS. The order confirmation email used to be sent when the order
+-- was PLACED - before the shopper had paid anything - so a real order
+-- (PP-5VJGT7AS) told the customer "a confirmation email is on its way" while the
+-- order was still awaiting payment. The receipt is now sent only from a VERIFIED
+-- payment path (the HMAC-SHA512-checked IPN webhook, the live status
+-- reconciliation, or the post-return confirmation) and only once the provider
+-- reports the payment as settled (`finished`).
+--
+-- "Exactly one email per order" then has to be enforced, because three paths can
+-- observe the same settlement, NOWPayments retries a webhook until it gets a 2xx,
+-- and two serverless instances can run concurrently. A plain "if not sent, send"
+-- check is a race. This column is the ATOMIC claim: a single conditional UPDATE
+-- moves it from NULL to now() for exactly one caller, and only that caller sends.
+--
+--   confirmation_email_sent_at  when the receipt was claimed/sent. NULL = not
+--                               sent. A send the provider did NOT accept releases
+--                               the claim (back to NULL) so a later attempt can
+--                               still deliver; an accepted send is never cleared.
+--
+-- Nullable: every existing order predates the gate and simply has no value,
+-- which is the correct state (no receipt has been sent for it yet). No backfill.
+--
+-- IDEMPOTENT: guarded with IF NOT EXISTS, so a re-run converges.
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "confirmation_email_sent_at" timestamp with time zone;

@@ -1,0 +1,25 @@
+-- Unpaid-order alert: one-shot claim column.
+--
+-- WHY THIS EXISTS. A crypto invoice can go unpaid: the shopper reaches the
+-- hosted checkout, gets distracted, and never sends the coins. Nothing in the
+-- store chased that - the order simply sat on "awaiting payment" forever, and
+-- the owner only found out by opening the panel. A scheduled job now emails the
+-- owner when an order has been unpaid for more than 24 hours.
+--
+-- The alert must fire EXACTLY ONCE per order. The job can run concurrently (two
+-- serverless instances, or a manual run overlapping the cron), and an owner who
+-- gets the same nudge every hour will start ignoring it. So the send is guarded
+-- by an ATOMIC claim on this column - a single conditional UPDATE that exactly
+-- one run can win - not by an if-not-sent check two runs can both pass.
+--
+--   unpaid_alert_sent_at  when the owner was alerted. NULL = not yet alerted.
+--                         A send the mail provider did NOT accept releases the
+--                         claim (back to NULL) so a later run can still deliver;
+--                         an accepted send is never cleared.
+--
+-- Nullable: every existing order predates the alert and simply has no value. No
+-- backfill - an old unpaid order will be picked up by the first run, which is
+-- the intended behaviour.
+--
+-- IDEMPOTENT: guarded with IF NOT EXISTS, so a re-run converges.
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "unpaid_alert_sent_at" timestamp with time zone;
